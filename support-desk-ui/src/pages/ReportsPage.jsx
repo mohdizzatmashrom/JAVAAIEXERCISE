@@ -1,8 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import StatusBadge from '../components/StatusBadge.jsx';
 import PriorityBadge from '../components/PriorityBadge.jsx';
-import { useAuth } from '../context/AuthContext.jsx';
-import { fetchTickets } from '../services/api.js';
+import { useTicketData } from '../context/TicketDataContext.jsx';
 
 const STATUS_ORDER = ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'];
 const PRIORITY_ORDER = ['HIGH', 'MEDIUM', 'LOW'];
@@ -15,25 +14,7 @@ function countBy(items, key) {
 }
 
 export default function ReportsPage() {
-  const { token } = useAuth();
-  const [tickets, setTickets] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-
-  useEffect(() => {
-    let ignore = false;
-    fetchTickets(token)
-      .then((data) => {
-        if (!ignore) setTickets(data);
-      })
-      .catch((err) => {
-        if (!ignore) setError(err.message);
-      })
-      .finally(() => {
-        if (!ignore) setLoading(false);
-      });
-    return () => { ignore = true; };
-  }, [token]);
+  const { tickets, loading, error } = useTicketData();
 
   const statusCounts = useMemo(() => countBy(tickets, 'status'), [tickets]);
   const priorityCounts = useMemo(() => countBy(tickets, 'priority'), [tickets]);
