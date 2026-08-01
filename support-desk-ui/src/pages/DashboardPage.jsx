@@ -1,17 +1,36 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import ApiInfoCard from '../components/ApiInfoCard.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
-import sampleTickets from '../data/sampleTickets.js';
+import { fetchTickets } from '../services/api.js';
 
 export default function DashboardPage() {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
+  const [tickets, setTickets] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const statusCounts = sampleTickets.reduce((acc, t) => {
+  useEffect(() => {
+    let ignore = false;
+    fetchTickets(token)
+      .then((data) => {
+        if (!ignore) setTickets(data);
+      })
+      .catch((err) => {
+        if (!ignore) setError(err.message);
+      })
+      .finally(() => {
+        if (!ignore) setLoading(false);
+      });
+    return () => { ignore = true; };
+  }, [token]);
+
+  const statusCounts = tickets.reduce((acc, t) => {
     acc[t.status] = (acc[t.status] || 0) + 1;
     return acc;
   }, {});
 
-  const priorityCounts = sampleTickets.reduce((acc, t) => {
+  const priorityCounts = tickets.reduce((acc, t) => {
     acc[t.priority] = (acc[t.priority] || 0) + 1;
     return acc;
   }, {});
@@ -36,22 +55,28 @@ export default function DashboardPage() {
       <ApiInfoCard />
 
       <section className="summary-cards">
-        <div className="summary-card">
-          <h3>Total Tickets</h3>
-          <span className="summary-number">{sampleTickets.length}</span>
-        </div>
-        <div className="summary-card">
-          <h3>Open</h3>
-          <span className="summary-number">{statusCounts.OPEN || 0}</span>
-        </div>
-        <div className="summary-card">
-          <h3>In Progress</h3>
-          <span className="summary-number">{statusCounts.IN_PROGRESS || 0}</span>
-        </div>
-        <div className="summary-card">
-          <h3>High Priority</h3>
-          <span className="summary-number">{priorityCounts.HIGH || 0}</span>
-        </div>
+        {loading && <p>Loading tickets...</p>}
+        {error && <p style={{ color: 'red' }}>{error}</p>}
+        {!loading && !error && (
+          <>
+            <div className="summary-card">
+              <h3>Total Tickets</h3>
+              <span className="summary-number">{tickets.length}</span>
+            </div>
+            <div className="summary-card">
+              <h3>Open</h3>
+              <span className="summary-number">{statusCounts.OPEN || 0}</span>
+            </div>
+            <div className="summary-card">
+              <h3>In Progress</h3>
+              <span className="summary-number">{statusCounts.IN_PROGRESS || 0}</span>
+            </div>
+            <div className="summary-card">
+              <h3>High Priority</h3>
+              <span className="summary-number">{priorityCounts.HIGH || 0}</span>
+            </div>
+          </>
+        )}
       </section>
     </>
   );

@@ -1,7 +1,8 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import StatusBadge from '../components/StatusBadge.jsx';
 import PriorityBadge from '../components/PriorityBadge.jsx';
-import sampleTickets from '../data/sampleTickets.js';
+import { useAuth } from '../context/AuthContext.jsx';
+import { fetchTickets } from '../services/api.js';
 
 const STATUS_ORDER = ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'];
 const PRIORITY_ORDER = ['HIGH', 'MEDIUM', 'LOW'];
@@ -14,13 +15,37 @@ function countBy(items, key) {
 }
 
 export default function ReportsPage() {
-  const statusCounts = useMemo(() => countBy(sampleTickets, 'status'), []);
-  const priorityCounts = useMemo(() => countBy(sampleTickets, 'priority'), []);
-  const categoryCounts = useMemo(() => countBy(sampleTickets, 'category'), []);
+  const { token } = useAuth();
+  const [tickets, setTickets] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    let ignore = false;
+    fetchTickets(token)
+      .then((data) => {
+        if (!ignore) setTickets(data);
+      })
+      .catch((err) => {
+        if (!ignore) setError(err.message);
+      })
+      .finally(() => {
+        if (!ignore) setLoading(false);
+      });
+    return () => { ignore = true; };
+  }, [token]);
+
+  const statusCounts = useMemo(() => countBy(tickets, 'status'), [tickets]);
+  const priorityCounts = useMemo(() => countBy(tickets, 'priority'), [tickets]);
+  const categoryCounts = useMemo(() => countBy(tickets, 'category'), [tickets]);
 
   return (
     <>
       <h2 className="page-title">Reports</h2>
+
+      {loading && <p>Loading reports...</p>}
+      {error && <p style={{ color: 'red' }}>{error}</p>}
+      {!loading && !error && (<>
 
       <section className="card report-card">
         <h3>Tickets by Status</h3>
@@ -59,6 +84,8 @@ export default function ReportsPage() {
             ))}
         </ul>
       </section>
+      </>
+      )}
     </>
   );
 }
