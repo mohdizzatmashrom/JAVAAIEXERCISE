@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef } from 'react';
-import { fetchPagedTickets } from '../services/api.js';
+import { fetchPagedTickets, updateTicket } from '../services/api.js';
 import { useAuth } from './AuthContext.jsx';
 
 const TicketDataContext = createContext(null);
@@ -95,6 +95,27 @@ function ticketReducer(state, action) {
 
     case 'SELECT_TICKET':
       return { ...state, selectedId: action.ticketId };
+
+    case 'OPTIMISTIC_STATUS_UPDATE': {
+      const updatedTickets = state.tickets.map((t) =>
+        t.id === action.ticketId ? { ...t, status: action.newStatus } : t
+      );
+      return { ...state, tickets: updatedTickets };
+    }
+
+    case 'ROLLBACK_STATUS': {
+      const rolledBack = state.tickets.map((t) =>
+        t.id === action.backupTicket.id ? action.backupTicket : t
+      );
+      return { ...state, tickets: rolledBack, error: action.message };
+    }
+
+    case 'CONFIRM_STATUS_UPDATE': {
+      const confirmed = state.tickets.map((t) =>
+        t.id === action.updatedTicket.id ? action.updatedTicket : t
+      );
+      return { ...state, tickets: confirmed };
+    }
 
     default:
       return state;
@@ -196,6 +217,44 @@ export function TicketDataProvider({ children }) {
     dispatch({ type: 'SELECT_TICKET', ticketId });
   }, []);
 
+  /* Optimistic status update ---------------------------------------- */
+
+  const updateTicketStatus = useCallback((ticketId, newStatus) => {
+    if (!token) return;
+
+    const s = stateRef.current;
+    const currentTicket = s.tickets.find((t) => t.id === ticketId);
+    if (!currentTicket || currentTicket.status === newStatus) return;
+
+    // 1. Save backup
+    const backupTicket = { ...currentTicket };
+
+    // 2. Update UI immediately (optimistic)
+    dispatch({ type: 'OPTIMISTIC_STATUS_UPDATE', ticketId, newStatus });
+
+    // 3. Build payload for PUT request
+    const payload = {
+      title: currentTicket.title,
+      description: currentTicket.description,
+      category: currentTicket.category,
+      priority: currentTicket.priority,
+      status: newStatus
+    };
+
+    // 4. Send PUT request
+    updateTicket(ticketId, token, payload)
+      .then((updatedTicket) => {
+        // 5a. Success – replace optimistic data with backend response
+        dispatch({ type: 'CONFIRM_STATUS_UPDATE', updatedTicket });
+        // Invalidate page cache since data changed
+        pageCache.clear();
+      })
+      .catch((err) => {
+        // 5b. Failure – roll back to backup
+        dispatch({ type: 'ROLLBACK_STATUS', backupTicket, message: err.message });
+      });
+  }, [token]);
+
   /* Derived values ------------------------------------------------- */
 
   const selectedTicket = useMemo(
@@ -217,9 +276,10 @@ export function TicketDataProvider({ children }) {
       setPageSize,
       setSortBy,
       setSortDirection,
-      selectTicket
+      selectTicket,
+      updateTicketStatus
     }),
-    [state, selectedTicket, loadTickets, refreshTickets, setSearchText, setStatusFilter, setPage, setPageSize, setSortBy, setSortDirection, selectTicket]
+    [state, selectedTicket, loadTickets, refreshTickets, setSearchText, setStatusFilter, setPage, setPageSize, setSortBy, setSortDirection, selectTicket, updateTicketStatus]
   );
 
   return <TicketDataContext.Provider value={value}>{children}</TicketDataContext.Provider>;

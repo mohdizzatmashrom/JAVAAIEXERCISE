@@ -1,8 +1,13 @@
 import { Link } from 'react-router';
 import PriorityBadge from './PriorityBadge.jsx';
 import StatusBadge from './StatusBadge.jsx';
+import { useTicketData } from '../context/TicketDataContext.jsx';
+
+const QUICK_STATUSES = ['OPEN', 'IN_PROGRESS', 'CLOSED'];
 
 export default function TicketDetail({ ticket }) {
+  const { updateTicketStatus } = useTicketData();
+
   if (!ticket) {
     return (
       <div className="ticket-detail empty-detail">
@@ -45,6 +50,22 @@ export default function TicketDetail({ ticket }) {
           <dd>{ticket.status}</dd>
         </div>
       </dl>
+
+      <div className="status-quick-update">
+        <span className="status-quick-label">Quick status:</span>
+        <div className="status-btn-group">
+          {QUICK_STATUSES.map((status) => (
+            <button
+              key={status}
+              className={`status-btn ${ticket.status === status ? 'status-btn-active' : ''}`}
+              onClick={() => updateTicketStatus(ticket.id, status)}
+              disabled={ticket.status === status}
+            >
+              {status === 'IN_PROGRESS' ? 'In Progress' : status.charAt(0) + status.slice(1).toLowerCase()}
+            </button>
+          ))}
+        </div>
+      </div>
 
       <div className="form-actions">
         <Link to={`/app/tickets/${ticket.id}/edit`} className="button-link secondary">
