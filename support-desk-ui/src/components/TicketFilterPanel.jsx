@@ -1,4 +1,15 @@
-export default function TicketFilterPanel({ searchText, onSearchChange, statusFilter, onStatusChange, priorityFilter, onPriorityChange }) {
+export default function TicketFilterPanel({
+  searchText,
+  onSearchChange,
+  statusFilter,
+  onStatusChange,
+  sortBy,
+  onSortByChange,
+  direction,
+  onDirectionChange,
+  pageSize,
+  onPageSizeChange
+}) {
   return (
     <div className="filter-panel">
       <input
@@ -17,19 +28,37 @@ export default function TicketFilterPanel({ searchText, onSearchChange, statusFi
         <option value="">All Statuses</option>
         <option value="OPEN">Open</option>
         <option value="IN_PROGRESS">In Progress</option>
-        <option value="RESOLVED">Resolved</option>
         <option value="CLOSED">Closed</option>
       </select>
 
       <select
         className="filter-select"
-        value={priorityFilter}
-        onChange={(e) => onPriorityChange(e.target.value)}
+        value={sortBy}
+        onChange={(e) => onSortByChange(e.target.value)}
       >
-        <option value="">All Priorities</option>
-        <option value="HIGH">High</option>
-        <option value="MEDIUM">Medium</option>
-        <option value="LOW">Low</option>
+        <option value="createdAt">Date Created</option>
+        <option value="title">Title</option>
+        <option value="priority">Priority</option>
+        <option value="status">Status</option>
+      </select>
+
+      <select
+        className="filter-select"
+        value={direction}
+        onChange={(e) => onDirectionChange(e.target.value)}
+      >
+        <option value="desc">Newest First</option>
+        <option value="asc">Oldest First</option>
+      </select>
+
+      <select
+        className="filter-select"
+        value={pageSize}
+        onChange={(e) => onPageSizeChange(Number(e.target.value))}
+      >
+        <option value={5}>5 per page</option>
+        <option value={10}>10 per page</option>
+        <option value={20}>20 per page</option>
       </select>
     </div>
   );

@@ -15,6 +15,18 @@ export async function fetchTickets(token) {
   return apiRequest('/v1/tickets', { token });
 }
 
+export async function fetchPagedTickets(token, { page = 0, size = 5, sortBy = 'createdAt', direction = 'desc', status = '', searchText = '' } = {}) {
+  const params = new URLSearchParams({
+    page: String(page),
+    size: String(size),
+    sortBy,
+    direction
+  });
+  if (status) params.set('status', status);
+  if (searchText) params.set('searchText', searchText);
+  return apiRequest(`/v1/tickets/paged?${params.toString()}`, { token });
+}
+
 export async function fetchTicketById(id, token) {
   return apiRequest(`/v1/tickets/${id}`, { token });
 }

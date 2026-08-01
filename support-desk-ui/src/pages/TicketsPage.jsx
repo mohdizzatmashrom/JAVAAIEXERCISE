@@ -2,18 +2,24 @@ import { useTicketData } from '../context/TicketDataContext.jsx';
 import TicketFilterPanel from '../components/TicketFilterPanel.jsx';
 import TicketList from '../components/TicketList.jsx';
 import TicketDetail from '../components/TicketDetail.jsx';
+import PaginationControls from '../components/PaginationControls.jsx';
 
 export default function TicketsPage() {
   const {
     loading,
     error,
-    filteredTickets,
+    tickets,
+    pageInfo,
+    sort,
     selectedId,
     selectedTicket,
     filters,
     setSearchText,
     setStatusFilter,
-    setPriorityFilter,
+    setPage,
+    setPageSize,
+    setSortBy,
+    setSortDirection,
     selectTicket
   } = useTicketData();
 
@@ -47,13 +53,24 @@ export default function TicketsPage() {
             onSearchChange={setSearchText}
             statusFilter={filters.statusFilter}
             onStatusChange={setStatusFilter}
-            priorityFilter={filters.priorityFilter}
-            onPriorityChange={setPriorityFilter}
+            sortBy={sort.sortBy}
+            onSortByChange={setSortBy}
+            direction={sort.direction}
+            onDirectionChange={setSortDirection}
+            pageSize={pageInfo.size}
+            onPageSizeChange={setPageSize}
           />
           <TicketList
-            tickets={filteredTickets}
+            tickets={tickets}
             selectedId={selectedId}
             onSelect={selectTicket}
+          />
+          <PaginationControls
+            page={pageInfo.page}
+            totalPages={pageInfo.totalPages}
+            totalElements={pageInfo.totalElements}
+            onPrev={() => setPage(pageInfo.page - 1)}
+            onNext={() => setPage(pageInfo.page + 1)}
           />
         </div>
         <TicketDetail ticket={selectedTicket} />

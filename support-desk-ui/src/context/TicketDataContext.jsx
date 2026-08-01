@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer } from 'react';
-import { fetchTickets } from '../services/api.js';
+import { fetchPagedTickets } from '../services/api.js';
 import { useAuth } from './AuthContext.jsx';
 
 const TicketDataContext = createContext(null);
@@ -15,14 +15,17 @@ const initialState = {
   error: '',
   pageInfo: {
     page: 0,
-    size: 20,
+    size: 5,
     totalPages: 0,
     totalElements: 0
   },
+  sort: {
+    sortBy: 'createdAt',
+    direction: 'desc'
+  },
   filters: {
     searchText: '',
-    statusFilter: '',
-    priorityFilter: ''
+    statusFilter: ''
   }
 };
 
@@ -36,7 +39,8 @@ function ticketReducer(state, action) {
       return { ...state, loading: true, error: '' };
 
     case 'LOAD_SUCCESS': {
-      const tickets = action.data;
+      const pageData = action.data;
+      const tickets = pageData.content ?? [];
       const selectedStillVisible = tickets.some((t) => t.id === state.selectedId);
       return {
         ...state,
@@ -45,9 +49,10 @@ function ticketReducer(state, action) {
         loading: false,
         error: '',
         pageInfo: {
-          ...state.pageInfo,
-          totalElements: tickets.length,
-          totalPages: 1
+          page: pageData.number ?? state.pageInfo.page,
+          size: pageData.size ?? state.pageInfo.size,
+          totalPages: pageData.totalPages ?? 0,
+          totalElements: pageData.totalElements ?? 0
         }
       };
     }
@@ -61,8 +66,17 @@ function ticketReducer(state, action) {
     case 'SET_STATUS_FILTER':
       return { ...state, filters: { ...state.filters, statusFilter: action.value } };
 
-    case 'SET_PRIORITY_FILTER':
-      return { ...state, filters: { ...state.filters, priorityFilter: action.value } };
+    case 'SET_PAGE':
+      return { ...state, pageInfo: { ...state.pageInfo, page: action.value } };
+
+    case 'SET_PAGE_SIZE':
+      return { ...state, pageInfo: { ...state.pageInfo, size: action.value, page: 0 } };
+
+    case 'SET_SORT_BY':
+      return { ...state, sort: { ...state.sort, sortBy: action.value } };
+
+    case 'SET_SORT_DIRECTION':
+      return { ...state, sort: { ...state.sort, direction: action.value } };
 
     case 'SELECT_TICKET':
       return { ...state, selectedId: action.ticketId };
@@ -80,16 +94,23 @@ export function TicketDataProvider({ children }) {
   const { token, isAuthenticated } = useAuth();
   const [state, dispatch] = useReducer(ticketReducer, initialState);
 
-  /* Load tickets only when the user is authenticated */
+  /* Load tickets from the paged endpoint */
   const loadTickets = useCallback(() => {
     if (!token) return;
 
     dispatch({ type: 'LOAD_START' });
 
-    fetchTickets(token)
+    fetchPagedTickets(token, {
+      page: state.pageInfo.page,
+      size: state.pageInfo.size,
+      sortBy: state.sort.sortBy,
+      direction: state.sort.direction,
+      status: state.filters.statusFilter,
+      searchText: state.filters.searchText
+    })
       .then((data) => dispatch({ type: 'LOAD_SUCCESS', data }))
       .catch((err) => dispatch({ type: 'LOAD_ERROR', message: err.message }));
-  }, [token]);
+  }, [token, state.pageInfo.page, state.pageInfo.size, state.sort.sortBy, state.sort.direction, state.filters.statusFilter, state.filters.searchText]);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -100,14 +121,30 @@ export function TicketDataProvider({ children }) {
   /* Stable action dispatchers */
   const setSearchText = useCallback((value) => {
     dispatch({ type: 'SET_SEARCH_TEXT', value });
+    dispatch({ type: 'SET_PAGE', value: 0 });
   }, []);
 
   const setStatusFilter = useCallback((value) => {
     dispatch({ type: 'SET_STATUS_FILTER', value });
+    dispatch({ type: 'SET_PAGE', value: 0 });
   }, []);
 
-  const setPriorityFilter = useCallback((value) => {
-    dispatch({ type: 'SET_PRIORITY_FILTER', value });
+  const setPage = useCallback((value) => {
+    dispatch({ type: 'SET_PAGE', value });
+  }, []);
+
+  const setPageSize = useCallback((value) => {
+    dispatch({ type: 'SET_PAGE_SIZE', value });
+  }, []);
+
+  const setSortBy = useCallback((value) => {
+    dispatch({ type: 'SET_SORT_BY', value });
+    dispatch({ type: 'SET_PAGE', value: 0 });
+  }, []);
+
+  const setSortDirection = useCallback((value) => {
+    dispatch({ type: 'SET_SORT_DIRECTION', value });
+    dispatch({ type: 'SET_PAGE', value: 0 });
   }, []);
 
   const selectTicket = useCallback((ticketId) => {
@@ -115,19 +152,6 @@ export function TicketDataProvider({ children }) {
   }, []);
 
   /* Derived values ------------------------------------------------- */
-
-  const filteredTickets = useMemo(() => {
-    const query = state.filters.searchText.toLowerCase();
-    return state.tickets.filter((t) => {
-      const matchesSearch =
-        !query ||
-        t.title.toLowerCase().includes(query) ||
-        t.category.toLowerCase().includes(query);
-      const matchesStatus = !state.filters.statusFilter || t.status === state.filters.statusFilter;
-      const matchesPriority = !state.filters.priorityFilter || t.priority === state.filters.priorityFilter;
-      return matchesSearch && matchesStatus && matchesPriority;
-    });
-  }, [state.tickets, state.filters]);
 
   const selectedTicket = useMemo(
     () => state.tickets.find((t) => t.id === state.selectedId) ?? null,
@@ -139,15 +163,17 @@ export function TicketDataProvider({ children }) {
   const value = useMemo(
     () => ({
       ...state,
-      filteredTickets,
       selectedTicket,
       loadTickets,
       setSearchText,
       setStatusFilter,
-      setPriorityFilter,
+      setPage,
+      setPageSize,
+      setSortBy,
+      setSortDirection,
       selectTicket
     }),
-    [state, filteredTickets, selectedTicket, loadTickets, setSearchText, setStatusFilter, setPriorityFilter, selectTicket]
+    [state, selectedTicket, loadTickets, setSearchText, setStatusFilter, setPage, setPageSize, setSortBy, setSortDirection, selectTicket]
   );
 
   return <TicketDataContext.Provider value={value}>{children}</TicketDataContext.Provider>;

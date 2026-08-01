@@ -10,12 +10,17 @@ import com.example.supportdesk.repository.TicketRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 @Service
 public class TicketService {
@@ -27,9 +32,11 @@ public class TicketService {
     private static final Set<String> ALLOWED_STATUSES = Set.of("OPEN", "IN_PROGRESS", "CLOSED");
 
     private final TicketRepository ticketRepository;
+    private final MongoTemplate mongoTemplate;
 
-    public TicketService(TicketRepository ticketRepository) {
+    public TicketService(TicketRepository ticketRepository, MongoTemplate mongoTemplate) {
         this.ticketRepository = ticketRepository;
+        this.mongoTemplate = mongoTemplate;
     }
 
     // Return all tickets from MongoDB
@@ -114,6 +121,36 @@ public class TicketService {
         logger.info("Fetching paginated tickets - page: {}, size: {}, sort: {}", pageable.getPageNumber(), pageable.getPageSize(), pageable.getSort());
         return ticketRepository.findAll(pageable)
                 .map(this::toResponse);
+    }
+
+    // Return a paged, sorted, and filtered list of tickets (supports status and search text)
+    public Page<TicketResponse> getPagedTickets(Pageable pageable, String status, String searchText) {
+        logger.info("Fetching paginated tickets - page: {}, size: {}, sort: {}, status: {}, searchText: {}",
+                pageable.getPageNumber(), pageable.getPageSize(), pageable.getSort(), status, searchText);
+
+        Query query = new Query();
+
+        // Apply status filter
+        if (status != null && !status.isBlank()) {
+            query.addCriteria(Criteria.where("status").is(status.toUpperCase()));
+        }
+
+        // Apply search text filter (matches title or category, case-insensitive)
+        if (searchText != null && !searchText.isBlank()) {
+            String escaped = Pattern.quote(searchText);
+            query.addCriteria(new Criteria().orOperator(
+                    Criteria.where("title").regex(escaped, "i"),
+                    Criteria.where("category").regex(escaped, "i")
+            ));
+        }
+
+        long total = mongoTemplate.count(query, Ticket.class);
+        query.with(pageable);
+
+        List<Ticket> tickets = mongoTemplate.find(query, Ticket.class);
+        List<TicketResponse> responses = tickets.stream().map(this::toResponse).toList();
+
+        return new PageImpl<>(responses, pageable, total);
     }
 
     // Helper to reject priorities outside LOW, MEDIUM, HIGH
