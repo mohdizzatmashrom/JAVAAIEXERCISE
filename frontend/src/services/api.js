@@ -1,90 +1,57 @@
-async function parseJsonResponse(response) {
-  const contentType = response.headers.get('content-type') ?? '';
-  const body = contentType.includes('application/json') ? await response.json() : null;
-
-  if (!response.ok) {
-    const message = body?.message || `Request failed with status ${response.status}`;
-    throw new Error(message);
-  }
-
-  return body;
-}
-
-function authHeaders(token, extraHeaders = {}) {
-  return {
-    Authorization: `Bearer ${token}`,
-    ...extraHeaders
-  };
-}
+import { apiRequest, buildQueryString } from './httpClient.js';
 
 export async function fetchApiInfo() {
-  const response = await fetch('/api/v1/info');
-  return parseJsonResponse(response);
+  return apiRequest('/api/v1/info');
 }
 
 export async function fetchApiDocs() {
-  const response = await fetch('/api/docs');
-  return parseJsonResponse(response);
+  return apiRequest('/api/docs');
 }
 
 export async function loginRequest(email, password) {
-  const response = await fetch('/api/auth/login', {
+  return apiRequest('/api/auth/login', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ email, password })
+    body: { email, password }
   });
-
-  return parseJsonResponse(response);
 }
 
 export async function fetchAssets(token) {
-  const response = await fetch('/api/v1/assets', {
-    headers: authHeaders(token)
+  return apiRequest('/api/v1/assets', { token });
+}
+
+export async function fetchPagedAssets(token, params) {
+  const queryString = buildQueryString({
+    page: params.page,
+    size: params.size,
+    sortBy: params.sortBy,
+    direction: params.direction
   });
 
-  return parseJsonResponse(response);
+  return apiRequest(`/api/v1/assets/paged?${queryString}`, { token });
 }
 
 export async function fetchAssetById(id, token) {
-  const response = await fetch(`/api/v1/assets/${id}`, {
-    headers: authHeaders(token)
-  });
-
-  return parseJsonResponse(response);
+  return apiRequest(`/api/v1/assets/${id}`, { token });
 }
 
 export async function createAsset(token, payload) {
-  const response = await fetch('/api/v1/assets', {
+  return apiRequest('/api/v1/assets', {
     method: 'POST',
-    headers: authHeaders(token, {
-      'Content-Type': 'application/json'
-    }),
-    body: JSON.stringify(payload)
+    token,
+    body: payload
   });
-
-  return parseJsonResponse(response);
 }
 
 export async function updateAsset(id, token, payload) {
-  const response = await fetch(`/api/v1/assets/${id}`, {
+  return apiRequest(`/api/v1/assets/${id}`, {
     method: 'PUT',
-    headers: authHeaders(token, {
-      'Content-Type': 'application/json'
-    }),
-    body: JSON.stringify(payload)
+    token,
+    body: payload
   });
-
-  return parseJsonResponse(response);
 }
 
 export async function fetchReport(path, token) {
-  const response = await fetch(path, {
-    headers: authHeaders(token)
-  });
-
-  return parseJsonResponse(response);
+  return apiRequest(path, { token });
 }
 
 export async function fetchAssetReports(token) {
