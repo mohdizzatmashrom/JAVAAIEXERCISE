@@ -1,0 +1,51 @@
+### Day 14: Data fetching, pagination and optimistic update support
+### Run Spring Boot first: mvn spring-boot:run
+
+### Login as seeded admin
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@example.com",
+  "password": "Admin@12345"
+}
+
+
+### Copy token from login response
+@token = PASTE_ADMIN_TOKEN_HERE
+
+
+### Paged assets - first page
+GET http://localhost:8080/api/v1/assets/paged?page=0&size=5&sortBy=assetTag&direction=asc
+Authorization: Bearer {{token}}
+
+
+### Paged assets - second page
+GET http://localhost:8080/api/v1/assets/paged?page=1&size=5&sortBy=assetTag&direction=asc
+Authorization: Bearer {{token}}
+
+
+### Paged assets - sorted by status
+GET http://localhost:8080/api/v1/assets/paged?page=0&size=5&sortBy=status&direction=asc
+Authorization: Bearer {{token}}
+
+
+### Get all assets and copy one id for optimistic update test
+GET http://localhost:8080/api/v1/assets
+Authorization: Bearer {{token}}
+
+
+### Update one asset status - same endpoint used by optimistic update
+PUT http://localhost:8080/api/v1/assets/PASTE_REAL_ASSET_ID_HERE
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "assetTag": "PASTE_EXISTING_ASSET_TAG",
+  "name": "PASTE_EXISTING_NAME",
+  "category": "PASTE_EXISTING_CATEGORY",
+  "serialNumber": "PASTE_EXISTING_SERIAL",
+  "status": "MAINTENANCE",
+  "location": "PASTE_EXISTING_LOCATION",
+  "assignedTo": ""
+}
