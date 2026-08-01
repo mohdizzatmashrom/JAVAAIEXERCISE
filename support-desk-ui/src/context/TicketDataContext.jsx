@@ -1,8 +1,18 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useReducer } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef } from 'react';
 import { fetchPagedTickets } from '../services/api.js';
 import { useAuth } from './AuthContext.jsx';
 
 const TicketDataContext = createContext(null);
+
+/* ------------------------------------------------------------------ */
+/*  In-memory page cache (module-level, survives re-renders)           */
+/* ------------------------------------------------------------------ */
+
+const pageCache = new Map();
+
+function buildCacheKey({ page, size, sortBy, direction, status, searchText }) {
+  return `${page}|${size}|${sortBy}|${direction}|${status ?? ''}|${searchText ?? ''}`;
+}
 
 /* ------------------------------------------------------------------ */
 /*  Initial state                                                      */
@@ -13,6 +23,7 @@ const initialState = {
   selectedId: null,
   loading: false,
   error: '',
+  cacheMessage: '',
   pageInfo: {
     page: 0,
     size: 5,
@@ -36,7 +47,7 @@ const initialState = {
 function ticketReducer(state, action) {
   switch (action.type) {
     case 'LOAD_START':
-      return { ...state, loading: true, error: '' };
+      return { ...state, loading: true, error: '', cacheMessage: '' };
 
     case 'LOAD_SUCCESS': {
       const pageData = action.data;
@@ -48,6 +59,7 @@ function ticketReducer(state, action) {
         selectedId: selectedStillVisible ? state.selectedId : (tickets[0]?.id ?? null),
         loading: false,
         error: '',
+        cacheMessage: action.cacheMessage ?? '',
         pageInfo: {
           page: pageData.number ?? state.pageInfo.page,
           size: pageData.size ?? state.pageInfo.size,
@@ -58,7 +70,10 @@ function ticketReducer(state, action) {
     }
 
     case 'LOAD_ERROR':
-      return { ...state, loading: false, error: action.message };
+      return { ...state, loading: false, error: action.message, cacheMessage: '' };
+
+    case 'SET_CACHE_MESSAGE':
+      return { ...state, cacheMessage: action.value };
 
     case 'SET_SEARCH_TEXT':
       return { ...state, filters: { ...state.filters, searchText: action.value } };
@@ -94,23 +109,53 @@ export function TicketDataProvider({ children }) {
   const { token, isAuthenticated } = useAuth();
   const [state, dispatch] = useReducer(ticketReducer, initialState);
 
-  /* Load tickets from the paged endpoint */
-  const loadTickets = useCallback(() => {
+  /* Use a ref to always have the latest state inside loadTickets
+     without re-creating the callback on every state change.         */
+  const stateRef = useRef(state);
+  stateRef.current = state;
+
+  /* Core fetch helper – called by both loadTickets and refreshTickets */
+  const doFetch = useCallback((forceRefresh) => {
     if (!token) return;
+
+    const s = stateRef.current;
+    const params = {
+      page: s.pageInfo.page,
+      size: s.pageInfo.size,
+      sortBy: s.sort.sortBy,
+      direction: s.sort.direction,
+      status: s.filters.statusFilter,
+      searchText: s.filters.searchText
+    };
+    const cacheKey = buildCacheKey(params);
+
+    // Check cache first (unless force-refresh)
+    if (!forceRefresh && pageCache.has(cacheKey)) {
+      const cached = pageCache.get(cacheKey);
+      dispatch({ type: 'LOAD_SUCCESS', data: cached, cacheMessage: 'Loaded from cache' });
+      return;
+    }
 
     dispatch({ type: 'LOAD_START' });
 
-    fetchPagedTickets(token, {
-      page: state.pageInfo.page,
-      size: state.pageInfo.size,
-      sortBy: state.sort.sortBy,
-      direction: state.sort.direction,
-      status: state.filters.statusFilter,
-      searchText: state.filters.searchText
-    })
-      .then((data) => dispatch({ type: 'LOAD_SUCCESS', data }))
+    fetchPagedTickets(token, params)
+      .then((data) => {
+        // Store in cache
+        pageCache.set(cacheKey, data);
+        dispatch({ type: 'LOAD_SUCCESS', data, cacheMessage: 'Fetched from backend' });
+      })
       .catch((err) => dispatch({ type: 'LOAD_ERROR', message: err.message }));
-  }, [token, state.pageInfo.page, state.pageInfo.size, state.sort.sortBy, state.sort.direction, state.filters.statusFilter, state.filters.searchText]);
+  }, [token]);
+
+  /* Load tickets – uses cache when available */
+  const loadTickets = useCallback(() => {
+    doFetch(false);
+  }, [doFetch]);
+
+  /* Refresh – always fetches from backend, updates cache */
+  const refreshTickets = useCallback(() => {
+    doFetch(true);
+  }, [doFetch]);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -165,6 +210,7 @@ export function TicketDataProvider({ children }) {
       ...state,
       selectedTicket,
       loadTickets,
+      refreshTickets,
       setSearchText,
       setStatusFilter,
       setPage,
@@ -173,7 +219,7 @@ export function TicketDataProvider({ children }) {
       setSortDirection,
       selectTicket
     }),
-    [state, selectedTicket, loadTickets, setSearchText, setStatusFilter, setPage, setPageSize, setSortBy, setSortDirection, selectTicket]
+    [state, selectedTicket, loadTickets, refreshTickets, setSearchText, setStatusFilter, setPage, setPageSize, setSortBy, setSortDirection, selectTicket]
   );
 
   return <TicketDataContext.Provider value={value}>{children}</TicketDataContext.Provider>;

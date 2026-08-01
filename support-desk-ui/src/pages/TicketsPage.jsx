@@ -9,6 +9,7 @@ export default function TicketsPage() {
     loading,
     error,
     tickets,
+    cacheMessage,
     pageInfo,
     sort,
     selectedId,
@@ -20,7 +21,8 @@ export default function TicketsPage() {
     setPageSize,
     setSortBy,
     setSortDirection,
-    selectTicket
+    selectTicket,
+    refreshTickets
   } = useTicketData();
 
   if (loading) {
@@ -45,7 +47,19 @@ export default function TicketsPage() {
 
   return (
     <>
-      <h2 className="page-title">Tickets</h2>
+      <div className="page-title-row">
+        <h2 className="page-title">Tickets</h2>
+        <div className="page-title-actions">
+          {cacheMessage && (
+            <span className={`cache-indicator ${cacheMessage === 'Loaded from cache' ? 'cache-hit' : 'cache-miss'}`}>
+              {cacheMessage}
+            </span>
+          )}
+          <button className="refresh-btn" onClick={refreshTickets} title="Force reload from backend">
+            Refresh
+          </button>
+        </div>
+      </div>
       <div className="ticket-dashboard">
         <div className="ticket-list-column">
           <TicketFilterPanel
