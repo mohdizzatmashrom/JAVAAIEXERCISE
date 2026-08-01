@@ -77,11 +77,13 @@ function ticketReducer(state, action) {
 /* ------------------------------------------------------------------ */
 
 export function TicketDataProvider({ children }) {
-  const { token } = useAuth();
+  const { token, isAuthenticated } = useAuth();
   const [state, dispatch] = useReducer(ticketReducer, initialState);
 
-  /* Load tickets once when the provider mounts or the token changes */
+  /* Load tickets only when the user is authenticated */
   const loadTickets = useCallback(() => {
+    if (!token) return;
+
     dispatch({ type: 'LOAD_START' });
 
     fetchTickets(token)
@@ -90,8 +92,10 @@ export function TicketDataProvider({ children }) {
   }, [token]);
 
   useEffect(() => {
-    loadTickets();
-  }, [loadTickets]);
+    if (isAuthenticated) {
+      loadTickets();
+    }
+  }, [isAuthenticated, loadTickets]);
 
   /* Stable action dispatchers */
   const setSearchText = useCallback((value) => {
