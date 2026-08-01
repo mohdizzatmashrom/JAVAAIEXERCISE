@@ -7,7 +7,6 @@ public class ApiEndpointResponse {
     private String access;
     private String description;
 
-    // Constructors and getters
     public ApiEndpointResponse(String method, String path, String access, String description) {
         this.method = method;
         this.path = path;

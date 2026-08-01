@@ -2,6 +2,7 @@ package com.example.supportdesk.controller;
 
 import com.example.supportdesk.dto.CreateTicketRequest;
 import com.example.supportdesk.dto.TicketResponse;
+import com.example.supportdesk.dto.UpdateTicketRequest;
 import com.example.supportdesk.service.TicketService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -46,5 +47,11 @@ public class TicketV1Controller {
     @ResponseStatus(HttpStatus.CREATED)
     public TicketResponse createTicket(@Valid @RequestBody CreateTicketRequest request) {
         return ticketService.createTicket(request);
+    }
+
+    // PUT /api/v1/tickets/{id} -> updates an existing ticket
+    @PutMapping("/{id}")
+    public TicketResponse updateTicket(@PathVariable String id, @Valid @RequestBody UpdateTicketRequest request) {
+        return ticketService.updateTicket(id, request);
     }
 }

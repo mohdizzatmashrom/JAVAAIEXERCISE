@@ -14,10 +14,10 @@ export default function AppShell() {
     <div className="app-shell">
       <header className="app-header">
         <div>
-          <p className="eyebrow">Day 12 Routing & Protected Views</p>
+          <p className="eyebrow">Day 13 Forms & Validation</p>
           <h1>Asset Tracker UI</h1>
           <p className="header-subtitle">
-            Nested routes, guarded pages, login redirect flow and protected backend data.
+            Controlled forms, client-side validation, inline errors and backend submit flows.
           </p>
         </div>
         <div className="user-panel">
@@ -29,7 +29,8 @@ export default function AppShell() {
 
       <nav className="app-nav" aria-label="Main navigation">
         <NavLink to="/app/dashboard">Dashboard</NavLink>
-        <NavLink to="/app/assets">Assets</NavLink>
+        <NavLink to="/app/assets" end>Assets</NavLink>
+        <NavLink to="/app/assets/new">Asset Form</NavLink>
         <NavLink to="/app/reports">Reports</NavLink>
         <NavLink to="/docs">API Docs</NavLink>
       </nav>

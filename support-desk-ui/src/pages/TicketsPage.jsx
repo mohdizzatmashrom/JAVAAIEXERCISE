@@ -1,18 +1,52 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import TicketFilterPanel from '../components/TicketFilterPanel.jsx';
 import TicketList from '../components/TicketList.jsx';
 import TicketDetail from '../components/TicketDetail.jsx';
-import sampleTickets from '../data/sampleTickets.js';
+import { useAuth } from '../context/AuthContext.jsx';
+import { fetchTickets } from '../services/api.js';
 
 export default function TicketsPage() {
-  const [selectedId, setSelectedId] = useState(sampleTickets[0].id);
+  const { token } = useAuth();
+  const [tickets, setTickets] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [selectedId, setSelectedId] = useState(null);
   const [searchText, setSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [priorityFilter, setPriorityFilter] = useState('');
 
+  // Load tickets from MongoDB through the protected backend API
+  useEffect(() => {
+    let ignore = false;
+    setLoading(true);
+    setError('');
+
+    fetchTickets(token)
+      .then((data) => {
+        if (!ignore) {
+          setTickets(data);
+          setSelectedId(data[0]?.id ?? null);
+        }
+      })
+      .catch((loadError) => {
+        if (!ignore) {
+          setError(loadError.message);
+        }
+      })
+      .finally(() => {
+        if (!ignore) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, [token]);
+
   const filteredTickets = useMemo(() => {
     const query = searchText.toLowerCase();
-    return sampleTickets.filter((t) => {
+    return tickets.filter((t) => {
       const matchesSearch =
         !query ||
         t.title.toLowerCase().includes(query) ||
@@ -21,9 +55,29 @@ export default function TicketsPage() {
       const matchesPriority = !priorityFilter || t.priority === priorityFilter;
       return matchesSearch && matchesStatus && matchesPriority;
     });
-  }, [searchText, statusFilter, priorityFilter]);
+  }, [tickets, searchText, statusFilter, priorityFilter]);
 
-  const selectedTicket = sampleTickets.find((t) => t.id === selectedId) || null;
+  const selectedTicket = tickets.find((t) => t.id === selectedId) || null;
+
+  if (loading) {
+    return (
+      <>
+        <h2 className="page-title">Tickets</h2>
+        <p className="ticket-form-loading">Loading tickets...</p>
+      </>
+    );
+  }
+
+  if (error) {
+    return (
+      <>
+        <h2 className="page-title">Tickets</h2>
+        <div className="ticket-form-error" role="alert">
+          <p>{error}</p>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>

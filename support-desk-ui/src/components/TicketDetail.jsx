@@ -1,3 +1,4 @@
+import { Link } from 'react-router';
 import PriorityBadge from './PriorityBadge.jsx';
 import StatusBadge from './StatusBadge.jsx';
 
@@ -33,7 +34,7 @@ export default function TicketDetail({ ticket }) {
         </div>
         <div className="detail-row">
           <dt>Created At</dt>
-          <dd>{ticket.createdAt}</dd>
+          <dd>{String(ticket.createdAt ?? '').replace('T', ' ').slice(0, 16)}</dd>
         </div>
         <div className="detail-row">
           <dt>Priority</dt>
@@ -44,6 +45,12 @@ export default function TicketDetail({ ticket }) {
           <dd>{ticket.status}</dd>
         </div>
       </dl>
+
+      <div className="form-actions">
+        <Link to={`/app/tickets/${ticket.id}/edit`} className="button-link secondary">
+          Edit Ticket
+        </Link>
+      </div>
     </div>
   );
 }

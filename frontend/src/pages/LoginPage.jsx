@@ -40,8 +40,8 @@ export default function LoginPage() {
         <p className="eyebrow">Day 12</p>
         <h1>Login to Asset Tracker</h1>
         <p>
-          This login calls our Day 9 backend, stores the JWT in localStorage for this demo
-          and redirects the user to the protected area of our application.
+          This login calls the Day 9 backend, stores the JWT in localStorage for the demo,
+          and redirects the user to the protected area.
         </p>
 
         <form onSubmit={handleSubmit} className="login-form">
@@ -49,7 +49,6 @@ export default function LoginPage() {
             Email
             <input
               type="email"
-              placeholder="Email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               required
@@ -60,7 +59,6 @@ export default function LoginPage() {
             Password
             <input
               type="password"
-              placeholder="Password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               required
@@ -77,8 +75,7 @@ export default function LoginPage() {
 
         <div className="login-help">
           <strong>Seeded admin</strong>
-          <span>email: admin@example.com</span>
-          <span>password: Admin@12345</span>
+          <span>admin@example.com / Admin@12345</span>
         </div>
       </section>
     </main>

@@ -21,7 +21,7 @@ Example ticket:
   category: 'Email',
   priority: 'HIGH',
   status: 'OPEN',
-  createdBy: 'ferran@example.com',
+  createdBy: 'amir@example.com',
   createdAt: '2026-07-09'
 }
 ```

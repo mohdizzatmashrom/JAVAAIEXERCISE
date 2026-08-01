@@ -25,10 +25,12 @@ Follow these steps:
 
 Answer these questions:
 
-1. What is the role of the repository?
-2. What is the difference between `Ticket` and `TicketResponse`?
-3. What does MongoDB store as the document ID?
-4. Why should the controller not talk directly to MongoDB?
+1. Why did data disappear in Day 6?
+2. Why does data remain in Day 7?
+3. What is the role of the repository?
+4. What is the difference between `Ticket` and `TicketResponse`?
+5. What does MongoDB store as the document ID?
+6. Why should the controller not talk directly to MongoDB?
 
 ---
 

@@ -1,5 +1,6 @@
 package com.example.assettracker.dto;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /*
@@ -12,20 +13,27 @@ import java.util.List;
 public class ApiErrorResponse {
 
     private String message;
+    private int status;
+    private LocalDateTime timestamp;
     private List<FieldErrorDetail> errors;
 
-    public ApiErrorResponse(String message) {
+    public ApiErrorResponse(String message, int status, List<FieldErrorDetail> errors) {
         this.message = message;
-        this.errors = List.of();
-    }
-
-    public ApiErrorResponse(String message, List<FieldErrorDetail> errors) {
-        this.message = message;
+        this.status = status;
+        this.timestamp = LocalDateTime.now();
         this.errors = errors;
     }
 
     public String getMessage() {
         return message;
+    }
+
+    public int getStatus() {
+        return status;
+    }
+
+    public LocalDateTime getTimestamp() {
+        return timestamp;
     }
 
     public List<FieldErrorDetail> getErrors() {

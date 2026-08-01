@@ -104,8 +104,7 @@ public class Asset {
         return assignedTo;
     }
 
-    public void setAssignedTo(Object assignedTo2) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'setAssignedTo'");
+    public void setAssignedTo(String assignedTo) {
+        this.assignedTo = assignedTo;
     }
 }

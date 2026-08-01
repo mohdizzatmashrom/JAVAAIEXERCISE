@@ -1,7 +1,6 @@
 package com.example.assettracker.service;
 
-import java.util.List;
-
+import com.example.assettracker.dto.ReportCountResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Sort;
@@ -10,7 +9,7 @@ import org.springframework.data.mongodb.core.aggregation.Aggregation;
 import org.springframework.data.mongodb.core.aggregation.AggregationResults;
 import org.springframework.stereotype.Service;
 
-import com.example.assettracker.dto.ReportCountResponse;
+import java.util.List;
 
 @Service
 public class AssetReportService {
@@ -38,19 +37,19 @@ public class AssetReportService {
         return countAssetsByField("location");
     }
 
-    private List<ReportCountResponse> countAssetsByField(String field) {
+    private List<ReportCountResponse> countAssetsByField(String fieldName) {
         Aggregation aggregation = Aggregation.newAggregation(
-                Aggregation.group(field).count().as("count"),
+                Aggregation.group(fieldName).count().as("count"),
                 Aggregation.project("count").and("_id").as("label"),
                 Aggregation.sort(Sort.Direction.ASC, "label")
         );
 
         AggregationResults<ReportCountResponse> results = mongoTemplate.aggregate(
-                aggregation, 
-                "assets", 
+                aggregation,
+                "assets",
                 ReportCountResponse.class
         );
-        
+
         return results.getMappedResults();
     }
 }

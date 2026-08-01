@@ -1,125 +1,120 @@
-# Day 7 Exercise 1: Install and Secure MongoDB
+# Day 7 Exercise 1: Install and Verify MongoDB
 
 ## Objective
 
-Install MongoDB Community Edition, configure authentication, create the required users, and verify that your MongoDB server is ready for development.
+In this exercise, you will set up MongoDB for local development and confirm that you can connect to it.
+
+You will use MongoDB as the database for your Spring Boot API.
 
 ---
 
-## Prerequisites
+## Required Tools
 
-Install the following software:
+You need:
 
-- MongoDB Community Server
-- MongoDB Compass
-- MongoDB Shell (`mongosh`)
-
----
-
-## Task 1 — Install MongoDB
-
-Install MongoDB on your computer.
-
-Verify that:
-
-- The MongoDB service is running.
-- You can connect to the local server using MongoDB Compass.
-- You can connect using `mongosh`.
+1. MongoDB Community Server
+2. MongoDB Compass
+3. MongoDB Shell (`mongosh`)
 
 ---
 
-## Task 2 — Create a Root Administrator
+## Task 1: Start MongoDB
 
-Using MongoDB Shell:
+Start MongoDB on your computer.
 
-- Switch to the `admin` database.
-- Create a root administrator account.
-- Verify that the administrator account was created successfully.
+Your trainer will guide you based on your operating system.
 
----
+If MongoDB is running correctly, it should accept connections on:
 
-## Task 3 — Enable Authentication
-
-Configure MongoDB so that authentication is required.
-
-After enabling authentication:
-
-- Restart MongoDB.
-- Verify that anonymous connections are no longer allowed.
-- Log in successfully using the administrator account you created.
+```text
+mongodb://localhost:27017
+```
 
 ---
 
-## Task 4 — Create the Application Database
+## Task 2: Verify Using MongoDB Compass
 
-Create a database named:
+Open MongoDB Compass and connect to:
+
+```text
+mongodb://localhost:27017
+```
+
+After connecting, create a database named:
 
 ```text
 support_desk_db
 ```
 
-Inside this database:
+Create a collection named:
 
-- Create an application user.
-- Grant only the permissions required for the application to read and write data.
-- Verify that the application user can successfully log in.
-
----
-
-## Task 5 — Create Sample Data
-
-Inside `support_desk_db`:
-
-- Create a `tickets` collection.
-- Insert at least one ticket document.
-- Verify that the document was saved successfully.
-
-The document should contain fields such as:
-
-- title
-- description
-- category
-- priority
-- status
-- createdBy
-- createdAt
-
-Use your own sample values.
+```text
+tickets
+```
 
 ---
 
-## Task 6 — Verify Using MongoDB Compass
+## Task 3: Insert a Test Document
 
-Connect to MongoDB Compass using the application user.
+Insert one test ticket document into the `tickets` collection.
 
-Verify that:
+Your document should contain fields such as:
 
-- `support_desk_db` exists.
-- `tickets` exists.
-- Your sample document is visible.
+```text
+title
+description
+category
+priority
+status
+createdBy
+createdAt
+```
+
+You may choose your own values.
+
+---
+
+## Task 4: Verify Using mongosh
+
+Open `mongosh` and run:
+
+```javascript
+db.runCommand({ ping: 1 })
+```
+
+The result should include:
+
+```text
+ok: 1
+```
+
+Then switch to your database:
+
+```javascript
+use support_desk_db
+```
+
+View your tickets:
+
+```javascript
+db.tickets.find().pretty()
+```
 
 ---
 
 ## Submission
 
-Submit screenshots showing:
+Submit a short note or screenshot showing:
 
-1. MongoDB running successfully.
-2. Successful login using the administrator account.
-3. Successful login using the application account.
-4. MongoDB Compass connected successfully.
-5. The `support_desk_db` database.
-6. The `tickets` collection.
-7. At least one ticket document.
+1. MongoDB Compass connected successfully.
+2. The `support_desk_db` database exists.
+3. The `tickets` collection exists.
+4. At least one test ticket document exists.
 
 ---
 
-## Reflection Questions
+## Reminder
 
-1. What is the purpose of the `admin` database?
+This exercise is only about confirming MongoDB works on your machine.
 
-2. Why should an application use its own database user instead of the root administrator?
-
-3. What is the difference between authentication and authorization?
-
-4. What would happen if authentication was disabled on a production database?
+Do not modify your Spring Boot code yet.

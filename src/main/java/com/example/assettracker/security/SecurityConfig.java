@@ -56,7 +56,6 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/assets", "/api/v1/assets/**").hasAnyRole("USER", "ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/v1/assets").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/v1/assets/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/v1/assets/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/v1/reports/**").hasAnyRole("USER", "ADMIN")
                         .anyRequest().authenticated()
                 )

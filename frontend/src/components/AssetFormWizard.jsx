@@ -1,114 +1,126 @@
-import { useRef, useState } from "react";
-import FormStepIndicator from "./FormStepIndicator";
-import InlineFieldError from "./InlineFieldError";
-import ErrorMessage from "./ErrorMessage";
+import { useRef, useState } from 'react';
+import FormStepIndicator from './FormStepIndicator.jsx';
+import InlineFieldError from './InlineFieldError.jsx';
+import ErrorMessage from './ErrorMessage.jsx';
 
-const STATUS_OPTIONS = ["Available", "In Use", "Maintenance", "Retired"];
+const STATUS_OPTIONS = ['AVAILABLE', 'ASSIGNED', 'MAINTENANCE'];
 
 export const emptyAssetForm = {
-    assetTag: "",
-    name: "",
-    category: "",
-    serialNumber: "",
-    status: "AVAILABLE",
-    location: "",
-    assignedTo: ""
+  assetTag: '',
+  name: '',
+  category: '',
+  serialNumber: '',
+  status: 'AVAILABLE',
+  location: '',
+  assignedTo: ''
 };
 
-export default function AssetFormWizard({ 
-    mode = "create",
-    initialValues = emptyAssetForm,
-    onSubmit, 
-    saving = false,
-    serverError = null,
-    successMessage = null,
+export default function AssetFormWizard({
+  mode = 'create',
+  initialValues = emptyAssetForm,
+  onSubmit,
+  saving = false,
+  serverError = '',
+  successMessage = ''
 }) {
-    const [ step, setStep ] = useState(1);
-    const [ formValues, setFormValues ] = useState(initialValues);
-    const [ fieldErrors, setFieldErrors ] = useState({});
-    const reviewCheckboxRef = useRef(null);
+  const [step, setStep] = useState(1);
+  const [formValues, setFormValues] = useState({ ...emptyAssetForm, ...initialValues });
+  const [fieldErrors, setFieldErrors] = useState({});
+  const reviewCheckboxRef = useRef(null);
 
-    const isEditMode = mode === "edit";
+  const isEditMode = mode === 'edit';
 
-    function updateField(fieldName, value) {
-        setFormValues((current) => ({
-            ...current,
-            [fieldName]: value
-        }));
+  function updateField(fieldName, value) {
+    setFormValues((current) => ({
+      ...current,
+      [fieldName]: value
+    }));
 
-        setFieldErrors((current) => ({
-            ...current,
-            [fieldName]: null
-        }));
+    setFieldErrors((current) => ({
+      ...current,
+      [fieldName]: ''
+    }));
+  }
+
+  function validateStep(stepToValidate) {
+    const errors = {};
+
+    if (stepToValidate === 1) {
+      if (!formValues.assetTag.trim()) {
+        errors.assetTag = 'Asset tag is required.';
+      } else if (!/^[A-Z0-9-]+$/.test(formValues.assetTag.trim())) {
+        errors.assetTag = 'Use uppercase letters, numbers and hyphens only.';
+      }
+
+      if (!formValues.name.trim()) {
+        errors.name = 'Asset name is required.';
+      } else if (formValues.name.trim().length < 3) {
+        errors.name = 'Asset name must be at least 3 characters.';
+      }
+
+      if (!formValues.category.trim()) {
+        errors.category = 'Category is required.';
+      }
+
+      if (!formValues.serialNumber.trim()) {
+        errors.serialNumber = 'Serial number is required.';
+      }
     }
 
-    function validateStep() {
-        const errors = {};
-        if (stepToValidate === 1) {
-            if (!formValues.assetTag.trim()) {
-                errors.assetTag = "Asset Tag is required.";
-            } else if (!/^[a-zA-Z0-9]+$/.test(formValues.assetTag)) {
-                errors.assetTag = "Asset Tag must be alphanumeric.";
-            }
-            if (!formValues.name.trim()) {
-                errors.name = "Name is required.";
-            } else if (formValues.name.trim().length < 3) {
-                errors.name = "Name must be at least 3 characters long.";
-            }
-            if (!formValues.category.trim()) {
-                errors.category = "Category is required.";
-            }
-            if (!formValues.serialNumber.trim()) {
-                errors.serialNumber = "Serial Number is required.";
-            }
+    if (stepToValidate === 2) {
+      if (!formValues.location.trim()) {
+        errors.location = 'Location is required.';
+      }
 
-            if (stepToValidate === 2) {
-                if (!formValues.location.trim()) {
-                    errors.location = "Location is required.";
-                } 
-                if (!STATUS_OPTIONS.includes(formValues.status)) {
-                    errors.status = "Choose a valid status.";
-                }
-                if (!formValues.assignedTo.trim()) {
-                    errors.assignedTo = "Assigned To is required (email address).";
-                }
-            }
-            setFieldErrors(errors);
-            return Object.keys(errors).length === 0;
-        }
+      if (!STATUS_OPTIONS.includes(formValues.status)) {
+        errors.status = 'Choose a valid status.';
+      }
+
+      if (formValues.assignedTo.trim() && !formValues.assignedTo.includes('@')) {
+        errors.assignedTo = 'Assigned user should look like an email address.';
+      }
     }
 
-    function goToNextStep() {
-        setFieldErrors({});
-        setStep((current) => Math.max(current + 1, 1));
+    if (stepToValidate === 3 && !reviewCheckboxRef.current?.checked) {
+      errors.review = 'Please confirm that you reviewed the asset details.';
     }
 
-    function goToPreviousStep() {
-        setFieldErrors({});
-        setStep((current) => Math.max(current - 1, 1));
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  }
+
+  function goToNextStep() {
+    if (validateStep(step)) {
+      setStep((current) => Math.min(current + 1, 3));
+    }
+  }
+
+  function goToPreviousStep() {
+    setFieldErrors({});
+    setStep((current) => Math.max(current - 1, 1));
+  }
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+
+    if (!validateStep(3)) {
+      return;
     }
 
-    async function handleSubmit(event) {
-        event.preventDefault();
-        
-        if (!validateStep(3)) {
-            return;
-        }
+    const payload = {
+      assetTag: formValues.assetTag.trim(),
+      name: formValues.name.trim(),
+      category: formValues.category.trim(),
+      serialNumber: formValues.serialNumber.trim(),
+      status: formValues.status,
+      location: formValues.location.trim(),
+      assignedTo: formValues.assignedTo.trim() || null
+    };
 
-        const payload = {
-            assetTag: formValues.assetTag.trim(),
-            name: formValues.name.trim(),
-            category: formValues.category.trim(),
-            serialNumber: formValues.serialNumber.trim(),
-            status: formValues.status,
-            location: formValues.location.trim(),
-            assignedTo: formValues.assignedTo.trim()
-        };
+    await onSubmit(payload);
+  }
 
-        await onSubmit(payload);
-    }
-
-    return (
+  return (
     <form className="card asset-form" onSubmit={handleSubmit} noValidate>
       <div className="section-heading">
         <p className="eyebrow">Day 13 form wizard</p>
@@ -256,8 +268,7 @@ export default function AssetFormWizard({
 }
 
 function formatLabel(key) {
-    return key
-        .replace(/([A-Z])/g, ' $1') // Add space before capital letters
-        .replace(/^./, str => str.toUpperCase()); // Capitalize first letter
+  return key
+    .replace(/([A-Z])/g, ' $1')
+    .replace(/^./, (letter) => letter.toUpperCase());
 }
-    

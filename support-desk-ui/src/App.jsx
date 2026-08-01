@@ -3,6 +3,7 @@ import ProtectedRoute from './components/ProtectedRoute.jsx';
 import AppShell from './components/AppShell.jsx';
 import DashboardPage from './pages/DashboardPage.jsx';
 import TicketsPage from './pages/TicketsPage.jsx';
+import TicketFormPage from './pages/TicketFormPage.jsx';
 import ReportsPage from './pages/ReportsPage.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import './App.css';
@@ -24,6 +25,8 @@ export default function App() {
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<DashboardPage />} />
         <Route path="tickets" element={<TicketsPage />} />
+        <Route path="tickets/new" element={<TicketFormPage />} />
+        <Route path="tickets/:ticketId/edit" element={<TicketFormPage />} />
         <Route path="reports" element={<ReportsPage />} />
       </Route>
 

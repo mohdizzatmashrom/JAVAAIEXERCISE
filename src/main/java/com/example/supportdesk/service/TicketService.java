@@ -1,8 +1,10 @@
 package com.example.supportdesk.service;
 
+import com.example.assettracker.exception.InvalidRequestException;
 import com.example.assettracker.exception.ResourceNotFoundException;
 import com.example.supportdesk.dto.CreateTicketRequest;
 import com.example.supportdesk.dto.TicketResponse;
+import com.example.supportdesk.dto.UpdateTicketRequest;
 import com.example.supportdesk.model.Ticket;
 import com.example.supportdesk.repository.TicketRepository;
 import org.slf4j.Logger;
@@ -13,11 +15,16 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class TicketService {
 
     private static final Logger logger = LoggerFactory.getLogger(TicketService.class);
+
+    private static final Set<String> ALLOWED_PRIORITIES = Set.of("LOW", "MEDIUM", "HIGH");
+
+    private static final Set<String> ALLOWED_STATUSES = Set.of("OPEN", "IN_PROGRESS", "CLOSED");
 
     private final TicketRepository ticketRepository;
 
@@ -78,11 +85,49 @@ public class TicketService {
         return toResponse(savedTicket);
     }
 
+    // Update an existing ticket in MongoDB, or throw 404 if it does not exist
+    public TicketResponse updateTicket(String id, UpdateTicketRequest request) {
+        logger.info("Updating ticket id={}", id);
+
+        Ticket ticket = ticketRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket " + id + " was not found"));
+
+        String priority = request.getPriority().trim().toUpperCase();
+        String status = request.getStatus().trim().toUpperCase();
+
+        validatePriority(priority);
+        validateStatus(status);
+
+        ticket.setTitle(request.getTitle().trim());
+        ticket.setDescription(request.getDescription().trim());
+        ticket.setCategory(request.getCategory().trim());
+        ticket.setPriority(priority);
+        ticket.setStatus(status);
+
+        Ticket updatedTicket = ticketRepository.save(ticket);
+        logger.info("Updated ticket with id: '{}', title: '{}'", updatedTicket.getId(), updatedTicket.getTitle());
+        return toResponse(updatedTicket);
+    }
+
     // Return a paged and sorted list of tickets
     public Page<TicketResponse> getPagedTickets(Pageable pageable) {
         logger.info("Fetching paginated tickets - page: {}, size: {}, sort: {}", pageable.getPageNumber(), pageable.getPageSize(), pageable.getSort());
         return ticketRepository.findAll(pageable)
                 .map(this::toResponse);
+    }
+
+    // Helper to reject priorities outside LOW, MEDIUM, HIGH
+    private void validatePriority(String priority) {
+        if (!ALLOWED_PRIORITIES.contains(priority)) {
+            throw new InvalidRequestException("Invalid priority: " + priority + ". Allowed priorities are: " + ALLOWED_PRIORITIES);
+        }
+    }
+
+    // Helper to reject statuses outside OPEN, IN_PROGRESS, CLOSED
+    private void validateStatus(String status) {
+        if (!ALLOWED_STATUSES.contains(status)) {
+            throw new InvalidRequestException("Invalid status: " + status + ". Allowed statuses are: " + ALLOWED_STATUSES);
+        }
     }
 
     // Helper to convert Ticket model to TicketResponse DTO

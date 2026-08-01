@@ -39,4 +39,4 @@ Answer briefly:
 
 ## Submit
 
-Your component tree and short reflection answers in Google Classroom.
+Your component tree and short reflection answers.

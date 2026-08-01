@@ -17,7 +17,7 @@ export default function TicketList({ tickets, selectedId, onSelect }) {
           <p className="ticket-title">{ticket.title}</p>
           <div className="ticket-item-footer">
             <StatusBadge status={ticket.status} />
-            <span className="ticket-date">{ticket.createdAt}</span>
+            <span className="ticket-date">{String(ticket.createdAt ?? '').slice(0, 10)}</span>
           </div>
         </li>
       ))}

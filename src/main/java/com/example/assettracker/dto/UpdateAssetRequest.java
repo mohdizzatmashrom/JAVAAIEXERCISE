@@ -12,7 +12,7 @@ public class UpdateAssetRequest {
 
     @NotBlank(message = "Category is required")
     private String category;
-    
+
     @NotBlank(message = "Serial number is required")
     private String serialNumber;
 

@@ -23,7 +23,7 @@ export default function DocsPage() {
         }
       } catch (err) {
         if (!ignore) {
-          setError('Could not load API documentation from the backed.');
+          setError('Could not load API docs from the backend.');
           console.error(err);
         }
       } finally {
@@ -35,13 +35,15 @@ export default function DocsPage() {
 
     loadDocs();
 
-    return () => { ignore = true; };
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   return (
     <main className="public-page">
       <section className="card docs-card">
-        <p className="eyebrow">API Documentation (Public Route)</p>
+        <p className="eyebrow">Public route</p>
         <h1>API Documentation</h1>
         <p>This page is public. It does not require login.</p>
         <Link to="/app/dashboard" className="button-link">Back to App</Link>

@@ -6,7 +6,7 @@ export default function NotFoundPage() {
       <section className="card not-found-card">
         <p className="eyebrow">404</p>
         <h1>Page not found</h1>
-        <p>The page you are looking for does not exist.</p>
+        <p>The route does not exist in the Day 12 React Router configuration.</p>
         <Link to="/app/dashboard" className="button-link">Go to Dashboard</Link>
       </section>
     </main>

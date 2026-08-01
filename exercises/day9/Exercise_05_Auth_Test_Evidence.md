@@ -22,3 +22,16 @@ requests/day09-auth.http
 7. Login admin returns token
 8. Create ticket with ADMIN token returns 201
 ```
+
+## Short written answer
+
+Answer these questions:
+
+```text
+1. What is authentication?
+2. What is authorisation?
+3. What does 401 mean?
+4. What does 403 mean?
+5. Why do we hash passwords?
+6. Where is the JWT placed in an HTTP request?
+```

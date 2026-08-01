@@ -40,7 +40,9 @@ export default function DashboardPage() {
 
     loadApiInformation();
 
-    return () => { ignore = true; };
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   return (

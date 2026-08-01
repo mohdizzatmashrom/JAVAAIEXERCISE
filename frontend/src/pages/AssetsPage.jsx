@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router';
 import AssetDetail from '../components/AssetDetail.jsx';
 import AssetList from '../components/AssetList.jsx';
 import ErrorMessage from '../components/ErrorMessage.jsx';
@@ -10,7 +11,7 @@ import { fetchAssets } from '../services/api.js';
 import { filterAssets } from '../utils/assets.js';
 
 export default function AssetsPage() {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const [assets, setAssets] = useState([]);
   const [selectedAsset, setSelectedAsset] = useState(null);
   const [searchText, setSearchText] = useState('');
@@ -78,6 +79,24 @@ export default function AssetsPage() {
 
   return (
     <>
+      <section className="card welcome-card">
+        <div>
+          <p className="eyebrow">Protected asset data</p>
+          <h2>Assets</h2>
+          <p>View backend data, then use the Day 13 form wizard to create or update records.</p>
+        </div>
+        {user?.role === 'ADMIN' && (
+          <div className="action-row">
+            <Link className="button-link" to="/app/assets/new">Create Asset</Link>
+            {selectedAsset && (
+              <Link className="button-link secondary" to={`/app/assets/${selectedAsset.id}/edit`}>
+                Edit Selected
+              </Link>
+            )}
+          </div>
+        )}
+      </section>
+
       <SummaryCards assets={assets} />
       <FilterPanel
         searchText={searchText}

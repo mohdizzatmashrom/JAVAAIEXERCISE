@@ -4,7 +4,6 @@ import com.example.assettracker.dto.AssetResponse;
 import com.example.assettracker.dto.CreateAssetRequest;
 import com.example.assettracker.service.AssetService;
 import jakarta.validation.Valid;
-
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -41,34 +40,31 @@ public class AssetController {
     // GET /api/assets -> returns all assets
     @GetMapping
     public List<AssetResponse> getAssets(
-        @RequestParam(required = false) String status,
-        @RequestParam(required = false) String category,
-        @RequestParam(required = false) String location
-    ) {
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String location) {
+
         return assetService.getAssets(status, category, location);
     }
 
     @GetMapping("/paged")
     public Page<AssetResponse> getAssetsPaged(
-        @RequestParam(defaultValue = "0") int page,
-        @RequestParam(defaultValue = "5") int size,
-        @RequestParam(defaultValue = "assetTag") String sortBy,
-        @RequestParam(defaultValue = "asc") String direction
-    ) {
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size,
+            @RequestParam(defaultValue = "assetTag") String sortBy,
+            @RequestParam(defaultValue = "asc") String direction) {
+
         return assetService.getAssetsPaged(page, size, sortBy, direction);
     }
 
-    // GET /api/assets/{id} -> returns a single asset by id
     @GetMapping("/{id}")
     public AssetResponse getAssetById(@PathVariable String id) {
         return assetService.getAssetById(id);
     }
 
-    // POST /api/assets -> create a new asset. @Valid triggers validation annotations
     @PostMapping
     public ResponseEntity<AssetResponse> createAsset(@Valid @RequestBody CreateAssetRequest request) {
-        AssetResponse created = assetService.createAsset(request);
-        // Return 201 Created with the created asset in the body
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+        AssetResponse createdAsset = assetService.createAsset(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdAsset);
     }
 }

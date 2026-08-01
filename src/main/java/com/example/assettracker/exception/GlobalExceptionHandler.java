@@ -3,6 +3,8 @@ package com.example.assettracker.exception;
 import com.example.assettracker.dto.ApiErrorResponse;
 import com.example.assettracker.dto.FieldErrorDetail;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -21,23 +23,59 @@ import java.util.List;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    // Map ResourceNotFoundException -> 404 Not Found with a simple JSON body.
     @ExceptionHandler(ResourceNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ApiErrorResponse handleResourceNotFound(ResourceNotFoundException exception) {
-        return new ApiErrorResponse(exception.getMessage());
+        return new ApiErrorResponse(
+                exception.getMessage(),
+                HttpStatus.NOT_FOUND.value(),
+                List.of()
+        );
     }
 
-    // Map validation errors (triggered by @Valid) -> 400 Bad Request.
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiErrorResponse handleValidationError(MethodArgumentNotValidException exception) {
+    public ApiErrorResponse handleValidationErrors(MethodArgumentNotValidException exception) {
         List<FieldErrorDetail> errors = exception.getBindingResult()
                 .getFieldErrors()
                 .stream()
                 .map(error -> new FieldErrorDetail(error.getField(), error.getDefaultMessage()))
                 .toList();
 
-        return new ApiErrorResponse("Validation failed", errors);
+        return new ApiErrorResponse(
+                "Validation failed",
+                HttpStatus.BAD_REQUEST.value(),
+                errors
+        );
+    }
+
+    @ExceptionHandler(DuplicateResourceException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ApiErrorResponse handleDuplicateResource(DuplicateResourceException exception) {
+        return new ApiErrorResponse(
+                exception.getMessage(),
+                HttpStatus.CONFLICT.value(),
+                List.of()
+        );
+    }
+
+    @ExceptionHandler(InvalidRequestException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiErrorResponse handleInvalidRequest(InvalidRequestException exception) {
+        return new ApiErrorResponse(
+                exception.getMessage(),
+                HttpStatus.BAD_REQUEST.value(),
+                List.of()
+        );
+    }
+
+    @ExceptionHandler({BadCredentialsException.class, UsernameNotFoundException.class})
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ApiErrorResponse handleBadCredentials(RuntimeException exception) {
+        return new ApiErrorResponse(
+                "Invalid email or password",
+                HttpStatus.UNAUTHORIZED.value(),
+                List.of()
+        );
     }
 }

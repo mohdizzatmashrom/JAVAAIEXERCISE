@@ -64,3 +64,126 @@ Authorization: Bearer {{token}}
   "location": "Training Room B",
   "assignedTo": "trainer@example.com"
 }
+
+
+### ===== Exercise 1: Ticket update endpoint =====
+
+### Get all tickets and copy one id for update
+GET http://localhost:8080/api/v1/tickets
+Authorization: Bearer {{token}}
+
+
+### Valid ticket update - should return 200 with updated ticket
+PUT http://localhost:8080/api/v1/tickets/REPLACE_WITH_TICKET_ID
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Email not syncing on laptop",
+  "description": "Outlook stopped syncing after the last update",
+  "category": "Email",
+  "priority": "HIGH",
+  "status": "IN_PROGRESS"
+}
+
+
+### Missing title - should return 400 with field error
+PUT http://localhost:8080/api/v1/tickets/REPLACE_WITH_TICKET_ID
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "",
+  "description": "Outlook stopped syncing after the last update",
+  "category": "Email",
+  "priority": "HIGH",
+  "status": "IN_PROGRESS"
+}
+
+
+### Invalid priority - should return 400
+PUT http://localhost:8080/api/v1/tickets/REPLACE_WITH_TICKET_ID
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Email not syncing on laptop",
+  "description": "Outlook stopped syncing after the last update",
+  "category": "Email",
+  "priority": "URGENT",
+  "status": "IN_PROGRESS"
+}
+
+
+### Invalid status - should return 400
+PUT http://localhost:8080/api/v1/tickets/REPLACE_WITH_TICKET_ID
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Email not syncing on laptop",
+  "description": "Outlook stopped syncing after the last update",
+  "category": "Email",
+  "priority": "HIGH",
+  "status": "DONE"
+}
+
+
+### Unknown ticket id - should return 404
+PUT http://localhost:8080/api/v1/tickets/000000000000000000000000
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Email not syncing on laptop",
+  "description": "Outlook stopped syncing after the last update",
+  "category": "Email",
+  "priority": "HIGH",
+  "status": "IN_PROGRESS"
+}
+
+
+### No token - should return 401
+PUT http://localhost:8080/api/v1/tickets/REPLACE_WITH_TICKET_ID
+Content-Type: application/json
+
+{
+  "title": "Email not syncing on laptop",
+  "description": "Outlook stopped syncing after the last update",
+  "category": "Email",
+  "priority": "HIGH",
+  "status": "IN_PROGRESS"
+}
+
+
+### ===== Exercise 4: Submit ticket from frontend form =====
+
+### Create ticket (same payload the form sends)
+POST http://localhost:8080/api/v1/tickets
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Keyboard keys not responding",
+  "description": "Several keys on the laptop keyboard stopped working",
+  "category": "Hardware",
+  "priority": "MEDIUM",
+  "status": "OPEN",
+  "createdBy": "admin@example.com"
+}
+
+
+### Create ticket without token - should return 401
+POST http://localhost:8080/api/v1/tickets
+Content-Type: application/json
+
+{
+  "title": "Keyboard keys not responding",
+  "description": "Several keys on the laptop keyboard stopped working",
+  "category": "Hardware",
+  "priority": "MEDIUM",
+  "status": "OPEN",
+  "createdBy": "admin@example.com"
+}
+
+

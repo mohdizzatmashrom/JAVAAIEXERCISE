@@ -45,7 +45,7 @@ ReportController.java
 
 ## Hint
 
-The in-class demo used this pattern:
+Your trainer demo used this pattern:
 
 ```java
 Aggregation.group("status").count().as("count")

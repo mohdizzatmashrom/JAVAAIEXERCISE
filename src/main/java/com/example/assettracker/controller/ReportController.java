@@ -1,15 +1,12 @@
 package com.example.assettracker.controller;
 
+import com.example.assettracker.dto.ReportCountResponse;
+import com.example.assettracker.service.AssetReportService;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.assettracker.dto.ReportCountResponse;
-import com.example.assettracker.service.AssetReportService;
-
 import java.util.List;
-
-import org.springframework.web.bind.annotation.GetMapping;
-
 
 @RestController
 @RequestMapping("/api/v1/reports")
@@ -35,5 +32,4 @@ public class ReportController {
     public List<ReportCountResponse> getAssetsByLocation() {
         return assetReportService.countAssetsByLocation();
     }
-    
 }
