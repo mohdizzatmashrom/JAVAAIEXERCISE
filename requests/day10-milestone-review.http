@@ -1,0 +1,282 @@
+### ====================================================================
+### Day 10 Exercise 5 - Backend Milestone Review - Test Evidence
+### Support Desk Ticket API
+### ====================================================================
+### Run the app first:  mvn spring-boot:run
+### App starts on port 8080 (see application.properties).
+### MongoDB must be running on localhost:27017.
+###
+### How to use this file:
+###   1. Run the Register request (checklist #10) to create a test user.
+###   2. Run the Login request (checklist #11) and copy the "token" value.
+###   3. Paste the token into the @token variable below.
+###   4. Run every request in order to collect evidence for all checklist items.
+### ====================================================================
+
+@baseUrl = http://localhost:8080
+@token = PASTE_TOKEN_HERE
+
+
+### ============================================================
+### CHECKLIST 1: Project runs successfully
+### The health endpoint proves the Spring Boot application started.
+### Expect: 200 OK
+### ============================================================
+GET {{baseUrl}}/api/health
+
+
+### ============================================================
+### CHECKLIST 2: MongoDB connection works
+### The login below queries the seeded admin user from MongoDB.
+### If MongoDB were down, this would return 500 / connection error.
+### Seeded admin credentials: admin@example.com / Admin@12345
+### Expect: 200 OK with a JWT token in the response body
+### ============================================================
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@example.com",
+  "password": "Admin@12345"
+}
+
+
+### ============================================================
+### CHECKLIST 10: Register endpoint works
+### Creates a brand-new user account and returns a JWT.
+### Expect: 201 Created with token, role USER
+### ============================================================
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "name": "Milestone Reviewer",
+  "email": "reviewer@example.com",
+  "password": "Review@12345"
+}
+
+
+### ============================================================
+### CHECKLIST 11: Login endpoint returns JWT
+### Login with the registered user to receive a fresh JWT.
+### Copy the "token" value from the response and paste it into
+### the @token variable at the top of this file.
+### Expect: 200 OK with token, tokenType "Bearer", role "USER"
+### ============================================================
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "reviewer@example.com",
+  "password": "Review@12345"
+}
+
+
+### ============================================================
+### CHECKLIST 12: Protected endpoints reject missing token
+### Calling /api/tickets WITHOUT an Authorization header.
+### Expect: 401 Unauthorized
+### ============================================================
+GET {{baseUrl}}/api/tickets
+
+
+### ============================================================
+### CHECKLIST 13: Protected endpoints accept valid token
+### Calling /api/tickets WITH a valid Bearer token.
+### Expect: 200 OK with a JSON array of tickets
+### ============================================================
+GET {{baseUrl}}/api/tickets
+Authorization: Bearer {{token}}
+
+
+### ============================================================
+### CHECKLIST 5: Basic CRUD endpoints work - List all tickets
+### Expect: 200 OK with JSON array (seeded data proves MongoDB)
+### ============================================================
+GET {{baseUrl}}/api/tickets
+Authorization: Bearer {{token}}
+
+
+### ============================================================
+### CHECKLIST 5: Basic CRUD endpoints work - Get ticket by ID
+### Replace TICKET_ID_HERE with a real id from the list above.
+### Expect: 200 OK with a single ticket object
+### ============================================================
+GET {{baseUrl}}/api/tickets/TICKET_ID_HERE
+Authorization: Bearer {{token}}
+
+
+### ============================================================
+### CHECKLIST 5: Basic CRUD endpoints work - Create ticket
+### Expect: 201 Created with the new ticket (status defaults to OPEN)
+### ============================================================
+POST {{baseUrl}}/api/tickets
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "Milestone review test ticket",
+  "description": "Created during the Day 10 backend milestone review.",
+  "category": "Bug",
+  "priority": "Medium",
+  "createdBy": "reviewer@example.com"
+}
+
+
+### ============================================================
+### CHECKLIST 6: Filtering works - Filter by status
+### Expect: 200 OK, only tickets with status OPEN
+### ============================================================
+GET {{baseUrl}}/api/tickets?status=OPEN
+Authorization: Bearer {{token}}
+
+
+### ============================================================
+### CHECKLIST 6: Filtering works - Filter by priority
+### Expect: 200 OK, only tickets with priority HIGH
+### ============================================================
+GET {{baseUrl}}/api/tickets?priority=HIGH
+Authorization: Bearer {{token}}
+
+
+### ============================================================
+### CHECKLIST 6: Filtering works - Filter by category
+### Expect: 200 OK, only tickets with category Email
+### ============================================================
+GET {{baseUrl}}/api/tickets?category=Email
+Authorization: Bearer {{token}}
+
+
+### ============================================================
+### CHECKLIST 7: Pagination works
+### Page 0, size 3 returns the first 3 tickets.
+### Expect: 200 OK with page metadata (totalElements, totalPages, ...)
+### ============================================================
+GET {{baseUrl}}/api/tickets/paged?page=0&size=3
+Authorization: Bearer {{token}}
+
+
+### ============================================================
+### CHECKLIST 8: Sorting works - Ascending by title
+### Expect: 200 OK, tickets ordered alphabetically by title (A -> Z)
+### ============================================================
+GET {{baseUrl}}/api/tickets/paged?page=0&size=10&sortBy=title&direction=asc
+Authorization: Bearer {{token}}
+
+
+### ============================================================
+### CHECKLIST 8: Sorting works - Descending by createdAt
+### Expect: 200 OK, newest tickets first
+### ============================================================
+GET {{baseUrl}}/api/tickets/paged?page=0&size=10&sortBy=createdAt&direction=desc
+Authorization: Bearer {{token}}
+
+
+### ============================================================
+### CHECKLIST 9: Validation errors return clear responses
+### Sending a ticket with missing required fields (title, description).
+### Expect: 400 Bad Request with a JSON error body listing field errors
+### ============================================================
+POST {{baseUrl}}/api/tickets
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "",
+  "description": "",
+  "category": "Bug",
+  "priority": "Medium",
+  "createdBy": "reviewer@example.com"
+}
+
+
+### ============================================================
+### CHECKLIST 9: Duplicate errors return clear responses
+### Registering the same email twice triggers a 409 / 400 conflict.
+### Expect: 400 / 409 with a clear "Email already exists" message
+### ============================================================
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "name": "Milestone Reviewer",
+  "email": "reviewer@example.com",
+  "password": "Review@12345"
+}
+
+
+### ============================================================
+### CHECKLIST 14: Versioned /api/v1 routes exist - List (v1)
+### Expect: 200 OK with JSON array of tickets
+### ============================================================
+GET {{baseUrl}}/api/v1/tickets
+Authorization: Bearer {{token}}
+
+
+### ============================================================
+### CHECKLIST 14: Versioned /api/v1 routes exist - Get by ID (v1)
+### Replace TICKET_ID_HERE with a real id.
+### Expect: 200 OK with a single ticket object
+### ============================================================
+GET {{baseUrl}}/api/v1/tickets/TICKET_ID_HERE
+Authorization: Bearer {{token}}
+
+
+### ============================================================
+### CHECKLIST 14: Versioned /api/v1 routes exist - Create (v1)
+### Expect: 201 Created with the new ticket
+### ============================================================
+POST {{baseUrl}}/api/v1/tickets
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "V1 milestone review ticket",
+  "description": "Created through the versioned v1 endpoint.",
+  "category": "Feature Request",
+  "priority": "Low",
+  "createdBy": "reviewer@example.com"
+}
+
+
+### ============================================================
+### CHECKLIST 15: Report endpoint works - Tickets by status
+### Returns a grouped count of tickets by status.
+### Expect: 200 OK with label/count array (e.g. OPEN, Closed)
+### ============================================================
+GET {{baseUrl}}/api/v1/reports/tickets-by-status
+Authorization: Bearer {{token}}
+
+
+### ============================================================
+### CHECKLIST 15: Report endpoint works - Tickets by priority
+### Returns a grouped count of tickets by priority.
+### Expect: 200 OK with label/count array (e.g. HIGH, Low, Medium)
+### ============================================================
+GET {{baseUrl}}/api/v1/reports/tickets-by-priority
+Authorization: Bearer {{token}}
+
+
+### ============================================================
+### CHECKLIST 16: API documentation endpoint exists
+### Returns a JSON document listing every API endpoint.
+### This endpoint is public (no token required).
+### Expect: 200 OK with application name, version, and endpoints array
+### ============================================================
+GET {{baseUrl}}/api/docs
+
+
+### ============================================================
+### BONUS: Public API info endpoint (versioned)
+### Expect: 200 OK with version, status, and documentation link
+### ============================================================
+GET {{baseUrl}}/api/v1/info
+
+
+### ============================================================
+### CHECKLIST 3 & 4 (code-level, verified in source):
+###   - Ticket model uses @Document(collection = "tickets") and @Id
+###       -> src/main/java/com/example/supportdesk/model/Ticket.java
+###   - TicketRepository extends MongoRepository<Ticket, String>
+###       -> src/main/java/com/example/supportdesk/repository/TicketRepository.java
+### ============================================================

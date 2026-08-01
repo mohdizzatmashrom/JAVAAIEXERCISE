@@ -1,0 +1,69 @@
+### Day 10: API Quality, Versioning, Docs and Reports
+### Run the app first: mvn spring-boot:run
+
+
+### Public health check
+GET http://localhost:8080/api/health
+
+
+### Public API information
+GET http://localhost:8080/api/v1/info
+
+
+### Public API documentation endpoint
+GET http://localhost:8080/api/docs
+
+
+### Login as seeded admin
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@example.com",
+  "password": "Admin@12345"
+}
+
+
+### Copy the token from the login response and paste it below
+### @token = PASTE_TOKEN_HERE
+@token = eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbkBleGFtcGxlLmNvbSIsInJvbGUiOiJBRE1JTiIsImlzcyI6ImFzc2V0LXRyYWNrZXItYXBpIiwibmFtZSI6IkFkbWluIFVzZXIiLCJleHAiOjE3ODM1MTQzMDUsImlhdCI6MTc4MzUxMDcwNSwidXNlcklkIjoiNmE0ZTMyMDBjYjFjNGU0ZDk4NTQ1M2MyIn0.3uw6frg6IlfY2lpICcURj5siCduXIeA6HpVcOr3PTo0
+
+
+### Versioned endpoint: get all assets
+GET http://localhost:8080/api/v1/assets
+Authorization: Bearer {{token}}
+
+
+### Versioned endpoint: paged assets
+GET http://localhost:8080/api/v1/assets/paged?page=0&size=5&sortBy=assetTag&direction=asc
+Authorization: Bearer {{token}}
+
+
+### API quality: invalid page should return 400 Bad Request
+GET http://localhost:8080/api/v1/assets/paged?page=-1&size=5&sortBy=assetTag&direction=asc
+Authorization: Bearer {{token}}
+
+
+### API quality: invalid size should return 400 Bad Request
+GET http://localhost:8080/api/v1/assets/paged?page=0&size=100&sortBy=assetTag&direction=asc
+Authorization: Bearer {{token}}
+
+
+### API quality: invalid sort field should return 400 Bad Request
+GET http://localhost:8080/api/v1/assets/paged?page=0&size=5&sortBy=password&direction=asc
+Authorization: Bearer {{token}}
+
+
+### Report: assets grouped by status
+GET http://localhost:8080/api/v1/reports/assets-by-status
+Authorization: Bearer {{token}}
+
+
+### Report: assets grouped by category
+GET http://localhost:8080/api/v1/reports/assets-by-category
+Authorization: Bearer {{token}}
+
+
+### Report: assets grouped by location
+GET http://localhost:8080/api/v1/reports/assets-by-location
+Authorization: Bearer {{token}}

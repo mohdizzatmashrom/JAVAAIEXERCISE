@@ -1,0 +1,96 @@
+### Day 9 Exercise 5 - Authentication Test Evidence
+### Run the app first: mvn spring-boot:run
+### Base URL
+@baseUrl = http://localhost:8080
+
+
+### ============================================================
+### 1. Health endpoint is public (expect 200)
+### ============================================================
+GET {{baseUrl}}/api/health
+
+
+### ============================================================
+### 2. Ticket endpoint WITHOUT token (expect 401 Unauthorized)
+### ============================================================
+GET {{baseUrl}}/api/tickets
+
+
+### ============================================================
+### 3. Register a new user (expect 201 + token with role USER)
+### ============================================================
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "name": "Test User",
+  "email": "testuser@example.com",
+  "password": "Test@12345"
+}
+
+
+### ============================================================
+### 4. Login the registered user (expect 200 + token)
+### Copy the token value from the response body
+### ============================================================
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "testuser@example.com",
+  "password": "Test@12345"
+}
+
+
+### ============================================================
+### 5. Ticket endpoint WITH user token (expect 200 OK)
+### Replace PASTE_USER_TOKEN_HERE with the token from step 3 or 4
+### ============================================================
+GET {{baseUrl}}/api/tickets
+Authorization: Bearer PASTE_USER_TOKEN_HERE
+
+
+### ============================================================
+### 6. Create ticket with normal USER token (expect 403 Forbidden)
+### ============================================================
+POST {{baseUrl}}/api/tickets
+Authorization: Bearer PASTE_USER_TOKEN_HERE
+Content-Type: application/json
+
+{
+  "title": "Network issue",
+  "description": "WiFi keeps disconnecting on Level 3.",
+  "category": "Network",
+  "priority": "HIGH",
+  "createdBy": "testuser@example.com"
+}
+
+
+### ============================================================
+### 7. Login seeded admin user (expect 200 + token with role ADMIN)
+### Seeded credentials: admin@example.com / Admin@12345
+### ============================================================
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@example.com",
+  "password": "Admin@12345"
+}
+
+
+### ============================================================
+### 8. Create ticket with ADMIN token (expect 201 Created)
+### Replace PASTE_ADMIN_TOKEN_HERE with the token from step 7
+### ============================================================
+POST {{baseUrl}}/api/tickets
+Authorization: Bearer PASTE_ADMIN_TOKEN_HERE
+Content-Type: application/json
+
+{
+  "title": "Server maintenance",
+  "description": "Scheduled maintenance for production server.",
+  "category": "Infrastructure",
+  "priority": "Medium",
+  "createdBy": "admin@example.com"
+}

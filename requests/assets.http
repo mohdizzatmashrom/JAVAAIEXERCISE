@@ -1,0 +1,100 @@
+### Day 9 - JWT Authentication Tests
+### Run the app first: mvn spring-boot:run
+### Base URL
+@baseUrl = http://localhost:8080
+
+
+### 1. Health check - public endpoint
+GET {{baseUrl}}/api/health
+
+
+### 2. Try to access assets without token - should return 401 Unauthorized
+GET {{baseUrl}}/api/assets
+
+
+### 3. Register a normal user - should return token with role USER
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "name": "Normal User",
+  "email": "user@example.com",
+  "password": "User@12345"
+}
+
+
+### 4. Login normal user - copy token from response
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "User@12345"
+}
+
+
+### 5. Get assets with USER token - should return 200 OK
+### Replace PASTE_USER_TOKEN_HERE with token from login/register response
+GET {{baseUrl}}/api/assets
+Authorization: Bearer PASTE_USER_TOKEN_HERE
+
+
+### 6. Try to create asset with USER token - should return 403 Forbidden
+POST {{baseUrl}}/api/assets
+Authorization: Bearer PASTE_USER_TOKEN_HERE
+Content-Type: application/json
+
+{
+  "assetTag": "CAM-2026-2001",
+  "name": "Logitech Webcam",
+  "category": "Camera",
+  "serialNumber": "SN-CAM-2001",
+  "location": "HQ Level 2"
+}
+
+
+### 7. Login seeded admin user - copy token from response
+### Seeded admin credentials: admin@example.com / Admin@12345
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@example.com",
+  "password": "Admin@12345"
+}
+
+
+### 8. Create asset with ADMIN token - should return 201 Created
+### Replace PASTE_ADMIN_TOKEN_HERE with token from admin login response
+POST {{baseUrl}}/api/assets
+Authorization: Bearer PASTE_ADMIN_TOKEN_HERE
+Content-Type: application/json
+
+{
+  "assetTag": "CAM-2026-3001",
+  "name": "Logitech Brio Webcam",
+  "category": "Camera",
+  "serialNumber": "SN-CAM-3001",
+  "location": "HQ Level 2"
+}
+
+
+### 9. Login with wrong password - should return 401 Unauthorized
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@example.com",
+  "password": "wrong-password"
+}
+
+
+### 10. Register duplicate email - should return 409 Conflict
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "name": "Duplicate User",
+  "email": "user@example.com",
+  "password": "User@12345"
+}

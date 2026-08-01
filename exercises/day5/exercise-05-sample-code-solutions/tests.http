@@ -1,0 +1,94 @@
+### Health check
+GET http://localhost:8081/api/health
+
+
+### Get all events
+GET http://localhost:8081/api/events
+
+
+### Get one event
+GET http://localhost:8081/api/events/EV001
+
+
+### Get event that does not exist
+GET http://localhost:8081/api/events/EV999
+
+
+### Get all bookings before creating any booking
+GET http://localhost:8081/api/bookings
+
+
+### Create a valid booking
+POST http://localhost:8081/api/bookings
+Content-Type: application/json
+
+{
+  "eventId": "EV001",
+  "participantName": "Aisha Rahman",
+  "participantEmail": "aisha@example.com",
+  "seats": 2
+}
+
+
+### Get all bookings after creating a booking
+GET http://localhost:8081/api/bookings
+
+
+### Get one booking
+GET http://localhost:8081/api/bookings/BK001
+
+
+### Check that available seats reduced
+GET http://localhost:8081/api/events/EV001
+
+
+### Create booking with missing fields
+POST http://localhost:8081/api/bookings
+Content-Type: application/json
+
+{
+  "eventId": "",
+  "participantName": "",
+  "participantEmail": "",
+  "seats": 0
+}
+
+
+### Create booking with invalid event ID
+POST http://localhost:8081/api/bookings
+Content-Type: application/json
+
+{
+  "eventId": "EV999",
+  "participantName": "Aisha Rahman",
+  "participantEmail": "aisha@example.com",
+  "seats": 2
+}
+
+
+### Create booking with too many seats
+POST http://localhost:8081/api/bookings
+Content-Type: application/json
+
+{
+  "eventId": "EV002",
+  "participantName": "Aisha Rahman",
+  "participantEmail": "aisha@example.com",
+  "seats": 100
+}
+
+
+### Get booking that does not exist
+GET http://localhost:8081/api/bookings/BK999
+
+
+### Challenge: Cancel booking
+DELETE http://localhost:8081/api/bookings/BK001
+
+
+### Check that seats were added back after cancellation
+GET http://localhost:8081/api/events/EV001
+
+
+### Challenge: Try cancelling the same booking again
+DELETE http://localhost:8081/api/bookings/BK001

@@ -1,0 +1,90 @@
+### Day 10 Exercise 1 & 2 - API Versioning & Ticket Report Test Evidence
+### Run the app first: mvn spring-boot:run
+### Base URL
+@baseUrl = http://localhost:8080
+
+
+### ============================================================
+### Step 1: Login as a USER to obtain a token (expect 200 + token)
+### Seeded credentials: testuser@example.com / Test@12345
+### Copy the token value from the response body below
+### ============================================================
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "testuser@example.com",
+  "password": "Test@12345"
+}
+
+
+### ============================================================
+### Evidence 1: /api/v1/tickets rejects requests WITHOUT a token
+### Expect: 401 Unauthorized
+### ============================================================
+GET {{baseUrl}}/api/v1/tickets
+
+
+### ============================================================
+### Evidence 2: /api/v1/tickets works WITH a valid token
+### Replace PASTE_USER_TOKEN_HERE with the token from Step 1
+### Expect: 200 OK
+### ============================================================
+GET {{baseUrl}}/api/v1/tickets
+Authorization: Bearer PASTE_USER_TOKEN_HERE
+
+
+### ============================================================
+### Bonus: Create a ticket via the v1 route with a USER token
+### Since v1 POST allows USER or ADMIN, this should succeed
+### Replace PASTE_USER_TOKEN_HERE with the token from Step 1
+### Expect: 201 Created
+### ============================================================
+POST {{baseUrl}}/api/v1/tickets
+Authorization: Bearer PASTE_USER_TOKEN_HERE
+Content-Type: application/json
+
+{
+  "title": "V1 API test ticket",
+  "description": "Created through the new versioned endpoint.",
+  "category": "Network",
+  "priority": "HIGH",
+  "createdBy": "testuser@example.com"
+}
+
+
+### ============================================================
+### Evidence 3: The old /api/tickets endpoint still works
+### Replace PASTE_USER_TOKEN_HERE with the token from Step 1
+### Expect: 200 OK (old endpoint is kept and still functional)
+### ============================================================
+GET {{baseUrl}}/api/tickets
+Authorization: Bearer PASTE_USER_TOKEN_HERE
+
+
+### ============================================================
+### Day 10 Exercise 2: Ticket Report by Status
+### Returns a grouped count of tickets by status
+### Replace PASTE_USER_TOKEN_HERE with the token from Step 1
+### Expect: 200 OK with label/count array
+### ============================================================
+GET {{baseUrl}}/api/v1/reports/tickets-by-status
+Authorization: Bearer PASTE_USER_TOKEN_HERE
+
+
+### ============================================================
+### Day 10 Exercise 3: Ticket Report by Priority
+### Returns a grouped count of tickets by priority (LOW, MEDIUM, HIGH)
+### Replace PASTE_USER_TOKEN_HERE with the token from Step 1
+### Expect: 200 OK with label/count array
+### ============================================================
+GET {{baseUrl}}/api/v1/reports/tickets-by-priority
+Authorization: Bearer PASTE_USER_TOKEN_HERE
+
+
+### ============================================================
+### Day 10 Exercise 4: API Documentation Endpoint
+### Returns a JSON list of all API endpoints (public, no token needed)
+### Expect: 200 OK
+### ============================================================
+GET {{baseUrl}}/api/docs

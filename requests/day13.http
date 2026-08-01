@@ -1,0 +1,66 @@
+### Day 13: Forms and Validation backend support
+### Run Spring Boot first: mvn spring-boot:run
+
+### Login as seeded admin
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@example.com",
+  "password": "Admin@12345"
+}
+
+
+### Copy token from login response
+@token = eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbkBleGFtcGxlLmNvbSIsInJvbGUiOiJBRE1JTiIsImlzcyI6ImFzc2V0LXRyYWNrZXItYXBpIiwibmFtZSI6IkFkbWluIFVzZXIiLCJleHAiOjE3ODM1MjQ5ODIsImlhdCI6MTc4MzUyMTM4MiwidXNlcklkIjoiNmE0ZTMyMDBjYjFjNGU0ZDk4NTQ1M2MyIn0.xgHsbJzYb6VntgtKkjWc6FXl2kVeDbpOixNAB22eL38
+
+
+### Create asset from frontend form
+POST http://localhost:8080/api/v1/assets
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "assetTag": "FORM-2026-001",
+  "name": "Training Room Camera",
+  "category": "Camera",
+  "serialNumber": "SN-FORM-001",
+  "location": "Training Room B"
+}
+
+
+### Get all assets and copy one id for update
+GET http://localhost:8080/api/v1/assets
+Authorization: Bearer {{token}}
+
+
+### Update asset from frontend form
+PUT http://localhost:8080/api/v1/assets/6a4e1056bd4000ca7cd48975
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "assetTag": "FORM-2026-001",
+  "name": "Training Room Camera Updated",
+  "category": "Camera",
+  "serialNumber": "SN-FORM-001",
+  "status": "ASSIGNED",
+  "location": "Training Room B",
+  "assignedTo": "trainer@example.com"
+}
+
+
+### Invalid update status - should return 400
+PUT http://localhost:8080/api/v1/assets/6a4e1056bd4000ca7cd48975
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "assetTag": "FORM-2026-001",
+  "name": "Training Room Camera Updated",
+  "category": "Camera",
+  "serialNumber": "SN-FORM-001",
+  "status": "BROKEN",
+  "location": "Training Room B",
+  "assignedTo": "trainer@example.com"
+}

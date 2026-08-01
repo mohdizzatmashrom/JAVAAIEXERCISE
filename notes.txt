@@ -1,0 +1,246 @@
+DAY 8
+Databases:
+1. Relational       SQL
+2. Non relational   NoSQL: Not SQL/ Not Only SQL
+    Any DB that does not use tables
+    Key Value pairs: assetTag: 'LAP-2026-4721'
+    Graph: MYself ---> My students
+    DOCUMENT databases:
+
+General mongosh syntax:
+db.collection_name.command(args)
+
+
+
+GET /api/assets?status=AVAILABLE
+
+Controller receives:
+status = "AVAILABLE"
+category = null
+location = null
+
+Services does:
+assetRepository.findBy...("AVAILABLE")
+
+Controller collect query params from URL
+
+Service checks which params were provided
+
+Repo perform db search
+
+Spring Data MongoDB
+
+=====================================DAY 9: Authentication & Authorisation=====================================
+
+Day 7: MongoDB
+Day 8: queries, pagination, indexes, logging, handing duplicates
+Day 9: secure our API
+
+Should anyone on the internet be able to create assets/entries into our system?
+We need to implement login and permission checks
+
+By end of today:
+1. Explain the differences between Authentication and Authorisation
+2. Password hashing, and why that's important
+3. Register a user using a backend endpoint
+4. Implement login JWT
+5. JWT send it using Authortization: Bearer
+6. Protect API endpoints using Spring Security
+7. Apply simple RBAC (Role-based access control)
+8. Test public, authenticated, rbac protected endpoints
+
+================================= KEY CONCEPTS =================================
+
+1. Authentication vs Authorisation
+Authentication: Who are you? e.g. A user who logins successfully.
+Authorisation: What are you allowed to do? The user might not be allowed to create/delete items.
+
+2. Password hashing
+NEVER store passwords in plain text
+User pwd -> BCrypt hashing -> passwordHash stored in the db
+Whenever a user logs in, Spring Security compare the entered pwd against the stored hash
+
+3. JWT idea
+JWT JSON Web Token
+Server give the client a signed token after login
+Client send the token in later requests
+Server check the token before allowing any access
+
+4. Client sends a token like this
+Authortization: Bearer <token>
+
+401 vs 403
+401 Unauthorised. User not logged in, or token is missing/invalid
+403 Forbidden. You are logged in, but your role is not allowed to do a certain action
+
+USER and ADMIN
+USER = View assets
+ADMIN = view and create assets
+
+Seed an admin user
+Normal registration creates USER account only
+
+
+
+===================================== Day 10: API Quality: Versioning, Docs, Aggregation =====================================
+
+What does API quality mean?
+An API is not only good because it works. It's good when it is:
+    1. Predictable
+    2. secure
+    3. Documented
+    4. Versioned
+    5. Tesable
+    6. Consistent
+
+VERSIONING
+Means putting a version number in the API path
+/api/v1/assets
+This allows future changes without immediately breaking older clients
+
+DOCUMENTATION
+Documentation tell devs:
+1. What endpoints exist?
+2. What method to use?
+3. What authentication is needed?
+4. What does each endpoint do?
+JSON documentation endpoint
+GET /api/docs
+
+AGGREGATION
+Means asking the db to calculate a summary
+Example: Count number of assets by status
+Instead of downloading every asset and counting in JavaScript, MongoDB groups and count the records
+
+ERROR CONTRACT
+A good API should return consistent errors
+{
+    "message": "Error message goes here",
+    "status": 400,
+    "timestamp": "YYYY-MM-DD-HH-mm-ss"
+    "errors": []
+}
+
+Milestone 1
+By the end of day 10, our backed should now have:
+1. MongoDB persistence
+2. CRUD
+3. Filtering
+4. pagination
+5. Sorting
+6. Indexes
+7. Duplicate handling
+8. JWT auth
+9. RBAC
+19. Versioned routes
+11. Docs endpoint
+
+
+
+===================================== Day 11: React Basics =====================================
+
+Component
+A component is a reusable piece of UI.
+
+Example:
+function StatusBadge({ status }) {
+  return <span>{status}</span>;
+}
+
+
+JSX
+JSX lets us write UI inside JavaScript.
+It looks similar to HTML, but it is JavaScript syntax.
+
+Props
+Props are inputs passed from a parent component to a child component.
+<StatusBadge status="AVAILABLE" />
+
+Inside the child:
+
+function StatusBadge({ status }) {
+  return <span>{status}</span>;
+}
+
+State
+data that can change while the app is running.
+
+const [selectedAsset, setSelectedAsset] = useState(null);
+
+When state changes, React updates the UI.
+
+useEffect
+
+`useEffect` is used for side effects.
+
+Examples:
+- API calls
+- reading local storage
+- setting up timers
+- syncing with external systems
+
+For Day 11, we use it to load public API information from the backend.
+
+Loading, error, empty and success states
+Professional UIs do not only show successful data.
+They also show:
+
+loading: data is being requested
+error: something failed
+empty: request succeeded but no data is available
+success: data is available
+
+
+Component tree
+shows how components are arranged.
+Example:
+
+App
+├── Layout
+├── SummaryCards
+├── FilterPanel
+└── AssetList
+
+
+===================================== Day 12: Routing & Protected Views =====================================
+
+Components on one screen -> components organised as pages
+
+What is routing?
+Deciding what UI to show based on the browser URL
+/login          Login page
+/docs           API documentation
+/app/dashboard  DASHBOARD
+/app/assets     List of assets
+
+In React, these pages are still components
+So routing in reality URL path -> React component 
+
+Traditional Routing vs React SPA Routing
+Traditional Website
+1. USer click a link
+2, Browser requests new HTML page from the Server
+3. Server send full HTML page
+4. Brower reloads the page
+
+REACT SPA
+User clicks link
+React Router updates the browser URL
+React changes the component shown
+The page does not fully reload
+
+BrowserRouter
+This activates routing for the app
+It uses the browser History API so the app can respond to URL changes
+main.jsx wraps the whole app
+App.jsx defines the routes
+
+    <BrowserRouter>
+      <AuthProvider>
+        <App />
+      </AuthProvider>
+    </BrowserRouter>
+
+Routes and Route
+Routes is the route container
+Route defines one URL

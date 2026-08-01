@@ -1,0 +1,68 @@
+package com.example.assettracker.controller;
+
+import com.example.assettracker.dto.AssetResponse;
+import com.example.assettracker.dto.CreateAssetRequest;
+import com.example.assettracker.dto.UpdateAssetRequest;
+import com.example.assettracker.service.AssetService;
+import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/v1/assets")
+public class AssetV1Controller {
+
+    private final AssetService assetService;
+
+    public AssetV1Controller(AssetService assetService) {
+        this.assetService = assetService;
+    }
+
+    @GetMapping
+    public List<AssetResponse> getAssets(
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String location) {
+
+        return assetService.getAssets(status, category, location);
+    }
+
+    @GetMapping("/paged")
+    public Page<AssetResponse> getAssetsPaged(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size,
+            @RequestParam(defaultValue = "assetTag") String sortBy,
+            @RequestParam(defaultValue = "asc") String direction) {
+
+        return assetService.getAssetsPaged(page, size, sortBy, direction);
+    }
+
+    @GetMapping("/{id}")
+    public AssetResponse getAssetById(@PathVariable String id) {
+        return assetService.getAssetById(id);
+    }
+
+    @PostMapping
+    public ResponseEntity<AssetResponse> createAsset(@Valid @RequestBody CreateAssetRequest request) {
+        AssetResponse createdAsset = assetService.createAsset(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdAsset);
+    }
+
+    @PutMapping("/{id}")
+    public AssetResponse updateAsset(
+            @PathVariable String id,
+            @Valid @RequestBody UpdateAssetRequest request) {
+        return assetService.updateAsset(id, request);
+    }
+}
