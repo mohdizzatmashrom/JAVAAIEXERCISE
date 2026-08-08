@@ -14,10 +14,10 @@ export default function AppShell() {
     <div className="app-shell">
       <header className="app-header">
         <div>
-          <p className="eyebrow">Day 13 Forms & Validation</p>
+          <p className="eyebrow">Day 14 Data Fetching & State</p>
           <h1>Asset Tracker UI</h1>
           <p className="header-subtitle">
-            Controlled forms, client-side validation, inline errors and backend submit flows.
+            Reusable data layer, caching, reducer state, pagination and optimistic updates.
           </p>
         </div>
         <div className="user-panel">

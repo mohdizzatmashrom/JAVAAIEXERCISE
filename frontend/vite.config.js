@@ -11,5 +11,11 @@ export default defineConfig({
         changeOrigin: true
       }
     }
+  },
+  test: {
+    environment: 'jsdom',
+    setupFiles: './src/test/setup.js',
+    include: ['src/**/*.test.{js,jsx}'],
+    exclude: ['node_modules', 'dist', 'e2e/**', 'playwright.config.js']
   }
 });
