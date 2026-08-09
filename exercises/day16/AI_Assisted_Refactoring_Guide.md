@@ -493,7 +493,7 @@ Tests should check behaviour, not unnecessary implementation details.
 
 ---
 
-# 13. Your student activity
+# 13. Activity
 
 You will apply AI-assisted refactoring to the Support Desk Ticket project.
 
@@ -518,7 +518,7 @@ Option C: Improve tests for ticket filtering or form validation
 
 ---
 
-# 14. Student submission checklist
+# 14. Submission checklist
 
 Submit or show:
 
@@ -570,4 +570,3 @@ Final reminder:
 The goal is not to make AI write everything.
 The goal is to become a better developer who can use AI carefully and professionally.
 ```
-
