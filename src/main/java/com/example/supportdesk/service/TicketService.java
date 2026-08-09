@@ -70,21 +70,19 @@ public class TicketService {
 
     // Return one ticket by ID from MongoDB, or throw 404
     public TicketResponse getTicketById(String id) {
-        Ticket ticket = ticketRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Ticket " + id + " was not found"));
-
+        Ticket ticket = findTicketOrThrow(id);
         return toResponse(ticket);
     }
 
     // Create a new ticket and save to MongoDB
     public TicketResponse createTicket(CreateTicketRequest request) {
         Ticket ticket = new Ticket();
-        ticket.setTitle(request.getTitle());
-        ticket.setDescription(request.getDescription());
-        ticket.setCategory(request.getCategory());
-        ticket.setPriority(request.getPriority());
+        ticket.setTitle(normalizeRequired(request.getTitle()));
+        ticket.setDescription(normalizeRequired(request.getDescription()));
+        ticket.setCategory(normalizeRequired(request.getCategory()));
+        ticket.setPriority(normalizePriority(request.getPriority()));
         ticket.setStatus("OPEN");
-        ticket.setCreatedBy(request.getCreatedBy());
+        ticket.setCreatedBy(normalizeRequired(request.getCreatedBy()));
         ticket.setCreatedAt(LocalDateTime.now());
 
         Ticket savedTicket = ticketRepository.save(ticket);
@@ -96,20 +94,13 @@ public class TicketService {
     public TicketResponse updateTicket(String id, UpdateTicketRequest request) {
         logger.info("Updating ticket id={}", id);
 
-        Ticket ticket = ticketRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Ticket " + id + " was not found"));
+        Ticket ticket = findTicketOrThrow(id);
 
-        String priority = request.getPriority().trim().toUpperCase();
-        String status = request.getStatus().trim().toUpperCase();
-
-        validatePriority(priority);
-        validateStatus(status);
-
-        ticket.setTitle(request.getTitle().trim());
-        ticket.setDescription(request.getDescription().trim());
-        ticket.setCategory(request.getCategory().trim());
-        ticket.setPriority(priority);
-        ticket.setStatus(status);
+        ticket.setTitle(normalizeRequired(request.getTitle()));
+        ticket.setDescription(normalizeRequired(request.getDescription()));
+        ticket.setCategory(normalizeRequired(request.getCategory()));
+        ticket.setPriority(normalizePriority(request.getPriority()));
+        ticket.setStatus(normalizeStatus(request.getStatus()));
 
         Ticket updatedTicket = ticketRepository.save(ticket);
         logger.info("Updated ticket with id: '{}', title: '{}'", updatedTicket.getId(), updatedTicket.getTitle());
@@ -153,21 +144,48 @@ public class TicketService {
         return new PageImpl<>(responses, pageable, total);
     }
 
-    // Helper to reject priorities outside LOW, MEDIUM, HIGH
+    // --- Private helper methods ---
+
+    // Look up a ticket by ID or throw 404 if not found
+    private Ticket findTicketOrThrow(String id) {
+        return ticketRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket " + id + " was not found"));
+    }
+
+    // Trim whitespace from a required string field
+    private String normalizeRequired(String value) {
+        return value.trim();
+    }
+
+    // Trim, uppercase, and validate a status value
+    private String normalizeStatus(String status) {
+        String normalized = status.trim().toUpperCase();
+        validateStatus(normalized);
+        return normalized;
+    }
+
+    // Trim, uppercase, and validate a priority value
+    private String normalizePriority(String priority) {
+        String normalized = priority.trim().toUpperCase();
+        validatePriority(normalized);
+        return normalized;
+    }
+
+    // Reject priorities outside LOW, MEDIUM, HIGH
     private void validatePriority(String priority) {
         if (!ALLOWED_PRIORITIES.contains(priority)) {
             throw new InvalidRequestException("Invalid priority: " + priority + ". Allowed priorities are: " + ALLOWED_PRIORITIES);
         }
     }
 
-    // Helper to reject statuses outside OPEN, IN_PROGRESS, CLOSED
+    // Reject statuses outside OPEN, IN_PROGRESS, CLOSED
     private void validateStatus(String status) {
         if (!ALLOWED_STATUSES.contains(status)) {
             throw new InvalidRequestException("Invalid status: " + status + ". Allowed statuses are: " + ALLOWED_STATUSES);
         }
     }
 
-    // Helper to convert Ticket model to TicketResponse DTO
+    // Convert Ticket model to TicketResponse DTO
     private TicketResponse toResponse(Ticket ticket) {
         return new TicketResponse(
                 ticket.getId(),

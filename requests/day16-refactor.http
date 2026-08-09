@@ -1,0 +1,150 @@
+### Day 16 Exercise 2: Backend Ticket Service Refactor - HTTP Evidence
+### Run Spring Boot first: mvn spring-boot:run
+
+### Login as seeded admin
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@example.com",
+  "password": "Admin@12345"
+}
+
+
+### Copy token from login response
+@token = PASTE_ADMIN_TOKEN_HERE
+
+
+### ============================================
+### 1. CREATE ticket - happy path
+### ============================================
+POST http://localhost:8080/api/v1/tickets
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "  Refactor Test Ticket  ",
+  "description": "  Testing normalization of input fields  ",
+  "category": "  BUG  ",
+  "priority": "  high  ",
+  "createdBy": "  admin  "
+}
+
+### Expected: 201 Created, all fields trimmed, priority = "HIGH", status = "OPEN"
+
+
+### ============================================
+### 2. GET ticket by ID - happy path
+### ============================================
+GET http://localhost:8080/api/v1/tickets/PASTE_CREATED_TICKET_ID
+Authorization: Bearer {{token}}
+
+### Expected: 200 OK, ticket returned with trimmed fields
+
+
+### ============================================
+### 3. GET ticket by ID - 404 error path
+### ============================================
+GET http://localhost:8080/api/v1/tickets/nonexistent-id-999
+Authorization: Bearer {{token}}
+
+### Expected: 404 Not Found, error message "Ticket nonexistent-id-999 was not found"
+
+
+### ============================================
+### 4. UPDATE ticket - happy path
+### ============================================
+PUT http://localhost:8080/api/v1/tickets/PASTE_CREATED_TICKET_ID
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Updated Refactor Test Ticket",
+  "description": "Updated description after refactor",
+  "category": "FEATURE",
+  "priority": "  low  ",
+  "status": "  in_progress  "
+}
+
+### Expected: 200 OK, priority = "LOW", status = "IN_PROGRESS", fields trimmed
+
+
+### ============================================
+### 5. UPDATE ticket - invalid priority (error path)
+### ============================================
+PUT http://localhost:8080/api/v1/tickets/PASTE_CREATED_TICKET_ID
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Should Fail",
+  "description": "Invalid priority test",
+  "category": "BUG",
+  "priority": "URGENT",
+  "status": "OPEN"
+}
+
+### Expected: 400 Bad Request, error message about invalid priority
+
+
+### ============================================
+### 6. UPDATE ticket - invalid status (error path)
+### ============================================
+PUT http://localhost:8080/api/v1/tickets/PASTE_CREATED_TICKET_ID
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Should Fail",
+  "description": "Invalid status test",
+  "category": "BUG",
+  "priority": "HIGH",
+  "status": "RESOLVED"
+}
+
+### Expected: 400 Bad Request, error message about invalid status
+
+
+### ============================================
+### 7. UPDATE ticket - not found (error path)
+### ============================================
+PUT http://localhost:8080/api/v1/tickets/nonexistent-id-999
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Should Fail",
+  "description": "Not found test",
+  "category": "BUG",
+  "priority": "HIGH",
+  "status": "OPEN"
+}
+
+### Expected: 404 Not Found, error message "Ticket nonexistent-id-999 was not found"
+
+
+### ============================================
+### 8. CREATE ticket - invalid priority (error path)
+### ============================================
+POST http://localhost:8080/api/v1/tickets
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Bad Priority Ticket",
+  "description": "Testing invalid priority on create",
+  "category": "BUG",
+  "priority": "CRITICAL",
+  "createdBy": "admin"
+}
+
+### Expected: 400 Bad Request, error message about invalid priority
+
+
+### ============================================
+### 9. GET all tickets - verify data integrity
+### ============================================
+GET http://localhost:8080/api/v1/tickets
+Authorization: Bearer {{token}}
+
+### Expected: 200 OK, all tickets returned with correct shapes
