@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import InlineFieldError from './InlineFieldError.jsx';
+import { validateTicketFormStep, normalizeTicketFormPayload } from '../utils/ticketFormValidation.js';
 
 const CATEGORY_OPTIONS = ['Email', 'Hardware', 'Software', 'Network', 'Account'];
 const PRIORITY_OPTIONS = ['HIGH', 'MEDIUM', 'LOW'];
@@ -37,28 +38,7 @@ export default function TicketFormWizard({
   }
 
   function validateForm() {
-    const errors = {};
-
-    if (!formValues.title.trim()) {
-      errors.title = 'Title is required.';
-    }
-
-    if (!formValues.description.trim()) {
-      errors.description = 'Description is required.';
-    }
-
-    if (!formValues.category) {
-      errors.category = 'Category is required.';
-    }
-
-    if (!formValues.priority) {
-      errors.priority = 'Priority is required.';
-    }
-
-    if (!formValues.status) {
-      errors.status = 'Status is required.';
-    }
-
+    const errors = validateTicketFormStep(formValues);
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
   }
@@ -71,13 +51,7 @@ export default function TicketFormWizard({
       return;
     }
 
-    const payload = {
-      title: formValues.title.trim(),
-      description: formValues.description.trim(),
-      category: formValues.category,
-      priority: formValues.priority,
-      status: formValues.status
-    };
+    const payload = normalizeTicketFormPayload(formValues);
 
     if (onSubmit) {
       onSubmit(payload);
