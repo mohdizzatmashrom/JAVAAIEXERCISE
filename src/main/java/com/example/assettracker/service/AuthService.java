@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -62,7 +63,7 @@ public class AuthService {
         );
 
         AppUser user = appUserRepository.findByEmailIgnoreCase(email)
-                .orElseThrow();
+                .orElseThrow(() -> new UsernameNotFoundException("User not found after authentication succeeded"));
 
         logger.info("User logged in email={} role={}", user.getEmail(), user.getRole());
 

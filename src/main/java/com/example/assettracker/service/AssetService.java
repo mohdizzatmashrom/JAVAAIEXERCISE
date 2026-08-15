@@ -37,8 +37,7 @@ public class AssetService {
     private static final Set<String> ALLOWED_STATUSES = Set.of(
             "AVAILABLE",
             "ASSIGNED",
-            "MAINTENANCE",
-            "RETIRED"
+            "MAINTENANCE"
     );
 
     private final AssetRepository assetRepository;
@@ -185,6 +184,14 @@ public class AssetService {
 
     private boolean hasValue(String value) {
         return value != null && !value.isBlank();
+    }
+
+    public void deleteAsset(String id) {
+        if (!assetRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Asset " + id + " was not found");
+        }
+        assetRepository.deleteById(id);
+        logger.info("Deleted asset id={}", id);
     }
 
     private AssetResponse toResponse(Asset asset) {

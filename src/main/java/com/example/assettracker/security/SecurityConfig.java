@@ -27,6 +27,7 @@ import com.nimbusds.jose.jwk.source.ImmutableSecret;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
+import jakarta.annotation.PostConstruct;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.List;
@@ -35,8 +36,30 @@ import java.util.List;
 @EnableWebSecurity
 public class SecurityConfig {
 
+    private static final String DEMO_SECRET = "day9-demo-secret-key-change-me-minimum-32-characters-2026";
+    private static final int MIN_SECRET_LENGTH = 32;
+
     @Value("${app.jwt.secret}")
     private String jwtSecret;
+
+    @PostConstruct
+    public void validateJwtSecret() {
+        if (jwtSecret == null || jwtSecret.trim().isEmpty()) {
+            throw new IllegalArgumentException("JWT secret must be configured via APP_JWT_SECRET environment variable");
+        }
+
+        if (jwtSecret.equals(DEMO_SECRET)) {
+            throw new IllegalArgumentException(
+                    "SECURITY ALERT: Demo JWT secret detected. Set APP_JWT_SECRET in .env before deploying."
+            );
+        }
+
+        if (jwtSecret.length() < MIN_SECRET_LENGTH) {
+            throw new IllegalArgumentException(
+                    "JWT secret must be at least " + MIN_SECRET_LENGTH + " characters (256 bits for HS256)"
+            );
+        }
+    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(
@@ -48,14 +71,18 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/health").permitAll()
+                        .requestMatchers("/api/readiness").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/docs/**").permitAll()
                         .requestMatchers("/api/v1/info").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/assets", "/api/assets/**").hasAnyRole("USER", "ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/assets").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/assets/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/assets/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/v1/assets", "/api/v1/assets/**").hasAnyRole("USER", "ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/v1/assets").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/v1/assets/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/assets/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/v1/reports/**").hasAnyRole("USER", "ADMIN")
                         .anyRequest().authenticated()
                 )
