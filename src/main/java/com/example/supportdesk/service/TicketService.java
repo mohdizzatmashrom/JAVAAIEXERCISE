@@ -2,6 +2,7 @@ package com.example.supportdesk.service;
 
 import com.example.assettracker.exception.InvalidRequestException;
 import com.example.assettracker.exception.ResourceNotFoundException;
+import com.example.assettracker.util.InputSanitizer;
 import com.example.supportdesk.dto.CreateTicketRequest;
 import com.example.supportdesk.dto.TicketResponse;
 import com.example.supportdesk.dto.UpdateTicketRequest;
@@ -77,12 +78,12 @@ public class TicketService {
     // Create a new ticket and save to MongoDB
     public TicketResponse createTicket(CreateTicketRequest request) {
         Ticket ticket = new Ticket();
-        ticket.setTitle(normalizeRequired(request.getTitle()));
-        ticket.setDescription(normalizeRequired(request.getDescription()));
-        ticket.setCategory(normalizeRequired(request.getCategory()));
+        ticket.setTitle(InputSanitizer.cleanText(request.getTitle()));
+        ticket.setDescription(InputSanitizer.cleanText(request.getDescription()));
+        ticket.setCategory(InputSanitizer.cleanText(request.getCategory()));
         ticket.setPriority(normalizePriority(request.getPriority()));
         ticket.setStatus("OPEN");
-        ticket.setCreatedBy(normalizeRequired(request.getCreatedBy()));
+        ticket.setCreatedBy(InputSanitizer.cleanText(request.getCreatedBy()));
         ticket.setCreatedAt(LocalDateTime.now());
 
         Ticket savedTicket = ticketRepository.save(ticket);
@@ -96,9 +97,9 @@ public class TicketService {
 
         Ticket ticket = findTicketOrThrow(id);
 
-        ticket.setTitle(normalizeRequired(request.getTitle()));
-        ticket.setDescription(normalizeRequired(request.getDescription()));
-        ticket.setCategory(normalizeRequired(request.getCategory()));
+        ticket.setTitle(InputSanitizer.cleanText(request.getTitle()));
+        ticket.setDescription(InputSanitizer.cleanText(request.getDescription()));
+        ticket.setCategory(InputSanitizer.cleanText(request.getCategory()));
         ticket.setPriority(normalizePriority(request.getPriority()));
         ticket.setStatus(normalizeStatus(request.getStatus()));
 
@@ -152,21 +153,16 @@ public class TicketService {
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket " + id + " was not found"));
     }
 
-    // Trim whitespace from a required string field
-    private String normalizeRequired(String value) {
-        return value.trim();
-    }
-
     // Trim, uppercase, and validate a status value
     private String normalizeStatus(String status) {
-        String normalized = status.trim().toUpperCase();
+        String normalized = InputSanitizer.upperCode(status);
         validateStatus(normalized);
         return normalized;
     }
 
     // Trim, uppercase, and validate a priority value
     private String normalizePriority(String priority) {
-        String normalized = priority.trim().toUpperCase();
+        String normalized = InputSanitizer.upperCode(priority);
         validatePriority(normalized);
         return normalized;
     }

@@ -8,6 +8,7 @@ import com.example.assettracker.exception.InvalidRequestException;
 import com.example.assettracker.exception.ResourceNotFoundException;
 import com.example.assettracker.model.Asset;
 import com.example.assettracker.repository.AssetRepository;
+import com.example.assettracker.util.InputSanitizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -47,16 +48,21 @@ public class AssetService {
     }
 
     public List<AssetResponse> getAssets(String status, String category, String location) {
-        logger.info("Fetching assets with status={}, category={}, location={}", status, category, location);
+        // Sanitise query parameters: trim + convert blank to null
+        String s = InputSanitizer.trimToNull(status);
+        String c = InputSanitizer.trimToNull(category);
+        String l = InputSanitizer.trimToNull(location);
+
+        logger.info("Fetching assets with status={}, category={}, location={}", s, c, l);
 
         List<Asset> assets;
 
-        if (hasValue(status)) {
-            assets = assetRepository.findByStatusIgnoreCase(status.trim());
-        } else if (hasValue(category)) {
-            assets = assetRepository.findByCategoryIgnoreCase(category.trim());
-        } else if (hasValue(location)) {
-            assets = assetRepository.findByLocationContainingIgnoreCase(location.trim());
+        if (s != null) {
+            assets = assetRepository.findByStatusIgnoreCase(s);
+        } else if (c != null) {
+            assets = assetRepository.findByCategoryIgnoreCase(c);
+        } else if (l != null) {
+            assets = assetRepository.findByLocationContainingIgnoreCase(l);
         } else {
             assets = assetRepository.findAll();
         }
@@ -93,8 +99,14 @@ public class AssetService {
     }
 
     public AssetResponse createAsset(CreateAssetRequest request) {
-        String assetTag = request.getAssetTag().trim();
-        String serialNumber = request.getSerialNumber().trim();
+        // Sanitise code-like fields (trim + remove control chars + uppercase)
+        String assetTag = InputSanitizer.upperCode(request.getAssetTag());
+        String serialNumber = InputSanitizer.upperCode(request.getSerialNumber());
+
+        // Sanitise free-text fields (trim + remove control chars)
+        String name = InputSanitizer.cleanText(request.getName());
+        String category = InputSanitizer.cleanText(request.getCategory());
+        String location = InputSanitizer.cleanText(request.getLocation());
 
         if (assetRepository.existsByAssetTag(assetTag)) {
             throw new DuplicateResourceException("Asset tag already exists: " + assetTag);
@@ -106,11 +118,11 @@ public class AssetService {
 
         Asset asset = new Asset(
                 assetTag,
-                request.getName().trim(),
-                request.getCategory().trim(),
+                name,
+                category,
                 serialNumber,
                 "AVAILABLE",
-                request.getLocation().trim(),
+                location,
                 null
         );
 
@@ -124,9 +136,16 @@ public class AssetService {
         Asset asset = assetRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Asset " + id + " was not found"));
 
-        String assetTag = request.getAssetTag().trim();
-        String serialNumber = request.getSerialNumber().trim();
-        String status = request.getStatus().trim().toUpperCase();
+        // Sanitise code-like fields
+        String assetTag = InputSanitizer.upperCode(request.getAssetTag());
+        String serialNumber = InputSanitizer.upperCode(request.getSerialNumber());
+        String status = InputSanitizer.upperCode(request.getStatus());
+
+        // Sanitise free-text fields
+        String name = InputSanitizer.cleanText(request.getName());
+        String category = InputSanitizer.cleanText(request.getCategory());
+        String location = InputSanitizer.cleanText(request.getLocation());
+        String assignedTo = InputSanitizer.normalizeOptional(request.getAssignedTo());
 
         validateStatus(status);
 
@@ -139,12 +158,12 @@ public class AssetService {
         }
 
         asset.setAssetTag(assetTag);
-        asset.setName(request.getName().trim());
-        asset.setCategory(request.getCategory().trim());
+        asset.setName(name);
+        asset.setCategory(category);
         asset.setSerialNumber(serialNumber);
         asset.setStatus(status);
-        asset.setLocation(request.getLocation().trim());
-        asset.setAssignedTo(normalizeOptional(request.getAssignedTo()));
+        asset.setLocation(location);
+        asset.setAssignedTo(assignedTo);
 
         Asset savedAsset = assetRepository.save(asset);
         return toResponse(savedAsset);
@@ -172,14 +191,6 @@ public class AssetService {
         if (!ALLOWED_STATUSES.contains(status)) {
             throw new InvalidRequestException("Status must be AVAILABLE, ASSIGNED or MAINTENANCE");
         }
-    }
-
-    private String normalizeOptional(String value) {
-        if (value == null || value.isBlank()) {
-            return null;
-        }
-
-        return value.trim();
     }
 
     private boolean hasValue(String value) {
