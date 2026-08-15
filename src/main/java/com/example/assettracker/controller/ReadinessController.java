@@ -1,13 +1,12 @@
 package com.example.assettracker.controller;
 
-import com.example.assettracker.repository.AssetRepository;
+import com.example.supportdesk.repository.TicketRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -15,23 +14,21 @@ import java.util.Map;
 @RequestMapping("/api/readiness")
 public class ReadinessController {
 
-    private final AssetRepository assetRepository;
+    private final TicketRepository ticketRepository;
 
-    public ReadinessController(AssetRepository assetRepository) {
-        this.assetRepository = assetRepository;
+    public ReadinessController(TicketRepository ticketRepository) {
+        this.ticketRepository = ticketRepository;
     }
 
     @GetMapping
-    public ResponseEntity<Map<String, Object>> readiness() {
-        Map<String, Object> response = new LinkedHashMap<>();
-        response.put("service", "asset-tracker-api");
-        response.put("timestamp", Instant.now().toString());
+    public ResponseEntity<Map<String, String>> readiness() {
+        Map<String, String> response = new LinkedHashMap<>();
+        response.put("service", "support-desk-api");
 
         try {
-            long assetCount = assetRepository.count();
+            ticketRepository.count();
             response.put("status", "READY");
             response.put("database", "CONNECTED");
-            response.put("assetCount", assetCount);
             return ResponseEntity.ok(response);
         } catch (RuntimeException exception) {
             response.put("status", "NOT_READY");
