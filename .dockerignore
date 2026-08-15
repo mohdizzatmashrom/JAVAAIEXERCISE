@@ -1,22 +1,38 @@
+# === Required by D17 Exercise 08 ===
+.env
+.env.*
+!.env.example
+secrets/
 target/
 node_modules/
-frontend/
-support-desk-ui/
+*.log
+
+# === IDE and editor files ===
 .git/
 .vscode/
 .idea/
+
+# === Frontend UI directories ===
+frontend/
+support-desk-ui/
+
+# === Documentation and markdown ===
 *.md
-*.log
-.env
+
+# === Secrets and certificates ===
 *.pem
 *.key
 *.crt
 *.jks
 *.p12
+
+# === Local data and logs ===
 data/
 db/
 mongodb-data/
 logs/
+
+# === Test and exercise files ===
 test-screenshots/
 test-api/
 exercises/
