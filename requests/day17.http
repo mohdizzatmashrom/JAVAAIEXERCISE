@@ -1,11 +1,17 @@
-### Day 17 - Health check
-GET http://localhost:8080/api/health
+@baseUrl = http://localhost:8080
+@token = paste-token-here-after-login
 
-### Day 17 - Readiness check
-GET http://localhost:8080/api/readiness
+### 1. Health check
+GET {{baseUrl}}/api/health
 
-### Day 17 - Login to confirm backend still works
-POST http://localhost:8080/api/auth/login
+### 2. Readiness check
+GET {{baseUrl}}/api/readiness
+
+### 3. Protected endpoint without token - should return 401
+GET {{baseUrl}}/api/v1/assets
+
+### 4. Login as admin
+POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
 
 {
@@ -13,10 +19,35 @@ Content-Type: application/json
   "password": "Admin@12345"
 }
 
-### Day 17 - Protected endpoint should return 401 without token
-GET http://localhost:8080/api/v1/assets/paged?page=0&size=5&sortBy=assetTag&direction=asc
-
-### Day 17 - Protected endpoint with token
-# Replace {{token}} after login.
-GET http://localhost:8080/api/v1/assets/paged?page=0&size=5&sortBy=assetTag&direction=asc
+### 5. Protected endpoint with token - should return 200
+GET {{baseUrl}}/api/v1/assets
 Authorization: Bearer {{token}}
+
+### 6. Paged assets timing check
+GET {{baseUrl}}/api/v1/assets/paged?page=0&size=5&sortBy=assetTag&direction=asc
+Authorization: Bearer {{token}}
+
+### 7. Invalid sort field - should return 400 if validation is enabled
+GET {{baseUrl}}/api/v1/assets/paged?page=0&size=5&sortBy=password&direction=asc
+Authorization: Bearer {{token}}
+
+### 8. Report timing check: assets by status
+GET {{baseUrl}}/api/v1/reports/assets-by-status
+Authorization: Bearer {{token}}
+
+### 9. Report timing check: assets by category
+GET {{baseUrl}}/api/v1/reports/assets-by-category
+Authorization: Bearer {{token}}
+
+### 10. Duplicate asset tag check - run only if LAP-2026-001 already exists
+POST {{baseUrl}}/api/v1/assets
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "assetTag": "LAP-2026-001",
+  "name": "Duplicate Laptop",
+  "category": "Laptop",
+  "serialNumber": "DUPLICATE-SN-DAY17",
+  "location": "Security Lab"
+}
