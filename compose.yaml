@@ -1,0 +1,82 @@
+# ======================================================
+# compose.yaml — Full Support Desk stack (Day 18)
+# ======================================================
+# Usage:
+#   docker compose up --build
+#   docker compose down
+#   docker compose down -v   # also remove volumes
+# ======================================================
+
+services:
+
+  # ---- MongoDB ----
+  mongo:
+    image: mongo:8
+    container_name: support-desk-mongo
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: appuser
+      MONGO_INITDB_ROOT_PASSWORD: appuser123
+      MONGO_INITDB_DATABASE: support_desk_db
+    ports:
+      - "${MONGO_HOST_PORT:-27018}:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  # ---- Backend (Spring Boot) ----
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: support-desk-api
+    restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      MONGODB_HOST: mongo
+      MONGODB_PORT: 27017
+      MONGODB_DATABASE: support_desk_db
+      MONGODB_AUTHENTICATION_DATABASE: admin
+      MONGODB_USERNAME: appuser
+      MONGODB_PASSWORD: appuser123
+      APP_JWT_SECRET: ${APP_JWT_SECRET:?Set APP_JWT_SECRET in .env. Copy .env.example to .env first.}
+      APP_JWT_EXPIRATION_MINUTES: ${APP_JWT_EXPIRATION_MINUTES:-60}
+      SERVER_PORT: 8080
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 45s
+
+  # ---- Frontend (Nginx + React SPA) ----
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: support-desk-ui
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    ports:
+      - "${FRONTEND_PORT:-5173}:80"
+
+volumes:
+  mongo_data:
