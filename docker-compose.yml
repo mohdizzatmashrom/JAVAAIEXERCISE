@@ -42,7 +42,7 @@ services:
       MONGODB_HOST: mongodb
       MONGODB_PORT: 27017
       MONGODB_DATABASE: ${MONGODB_DATABASE:-support_desk_db}
-      MONGODB_AUTHENTICATION_DATABASE: ${MONGODB_AUTHENTICATION_DATABASE:-support_desk_db}
+      MONGODB_AUTHENTICATION_DATABASE: admin
       MONGODB_USERNAME: ${MONGODB_USERNAME:-appuser}
       MONGODB_PASSWORD: ${MONGODB_PASSWORD:-appuser123}
       JWT_SECRET: ${JWT_SECRET:-supersecretkey_for_hmac_that_must_be_at_least_32_bytes_long_for_HS256}
@@ -57,7 +57,7 @@ services:
   # ---- Frontend (Nginx + React SPA) ----
   frontend:
     build:
-      context: ./support-desk-ui
+      context: ./frontend
       dockerfile: Dockerfile
     restart: unless-stopped
     ports:
