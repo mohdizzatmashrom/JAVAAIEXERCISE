@@ -1,0 +1,9 @@
+node_modules/
+dist/
+test-results/
+e2e/
+*.log
+.git
+.gitignore
+README.md
+.oxlintrc.json

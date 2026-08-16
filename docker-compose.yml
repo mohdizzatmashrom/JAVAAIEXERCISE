@@ -1,0 +1,75 @@
+# ======================================================
+# docker-compose.yml — Full Support Desk stack
+# ======================================================
+# Usage:
+#   docker compose up --build
+#   docker compose down
+# ======================================================
+
+services:
+
+  # ---- MongoDB ----
+  mongodb:
+    image: mongo:7
+    restart: unless-stopped
+    ports:
+      - "${MONGODB_PORT:-27017}:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGODB_USERNAME:-appuser}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_PASSWORD:-appuser123}
+      MONGO_INITDB_DATABASE: ${MONGODB_DATABASE:-support_desk_db}
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - support-desk-net
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # ---- Backend (Spring Boot) ----
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "${SERVER_PORT:-8080}:8080"
+    environment:
+      SERVER_PORT: 8080
+      MONGODB_HOST: mongodb
+      MONGODB_PORT: 27017
+      MONGODB_DATABASE: ${MONGODB_DATABASE:-support_desk_db}
+      MONGODB_AUTHENTICATION_DATABASE: ${MONGODB_AUTHENTICATION_DATABASE:-support_desk_db}
+      MONGODB_USERNAME: ${MONGODB_USERNAME:-appuser}
+      MONGODB_PASSWORD: ${MONGODB_PASSWORD:-appuser123}
+      JWT_SECRET: ${JWT_SECRET:-supersecretkey_for_hmac_that_must_be_at_least_32_bytes_long_for_HS256}
+      JWT_EXPIRATION_MINUTES: ${JWT_EXPIRATION_MINUTES:-60}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - support-desk-net
+
+  # ---- Frontend (Nginx + React SPA) ----
+  frontend:
+    build:
+      context: ./support-desk-ui
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - support-desk-net
+
+networks:
+  support-desk-net:
+    driver: bridge
+
+volumes:
+  mongo_data:

@@ -1,0 +1,63 @@
+# Git
+.git
+.gitignore
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+secrets/
+*.pem
+*.key
+*.crt
+*.p12
+*.jks
+
+# Java / Maven build output
+target/
+*.jar
+*.war
+*.ear
+
+# Maven local/cache files that should not be copied
+.mvn/wrapper/maven-wrapper.jar
+
+# Logs
+logs/
+*.log
+
+# IDE/editor files
+.idea/
+.vscode/
+.zed/
+*.iml
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Frontend files are not needed in the backend image
+frontend/
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Test/report output
+coverage/
+test-results/
+playwright-report/
+dist/
+build/
+
+# Course materials not needed inside backend image
+docs/
+exercises/
+requests/
+*.md
+
+# Docker/Compose files are not needed inside the backend runtime image
+compose.yaml
+docker-compose.yml
+docker-compose.yaml
