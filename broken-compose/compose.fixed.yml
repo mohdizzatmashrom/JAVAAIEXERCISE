@@ -1,0 +1,69 @@
+# Fixed Docker Compose file
+# All bugs from compose.broken.yml have been corrected.
+
+services:
+  mongo:
+    image: mongo:8
+    container_name: asset-tracker-mongo-broken
+    restart: unless-stopped
+    ports:
+      - "${MONGO_HOST_PORT:-27018}:27017"
+    volumes:
+      - mongo_data_broken:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  backend:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: asset-tracker-api-broken
+    restart: unless-stopped
+    # FIX 1: Use service_healthy condition to ensure MongoDB is ready before backend starts
+    depends_on:
+      mongo:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      # FIX 2: Use 'mongo' service name instead of 'localhost'
+      # In Docker Compose, containers communicate via service names, not localhost
+      SPRING_MONGODB_URI: mongodb://mongo:27017/asset_tracker_db
+      # FIX 3: APP_JWT_SECRET is now provided in .env.broken file
+      APP_JWT_SECRET: ${APP_JWT_SECRET:?Set APP_JWT_SECRET in .env.broken file}
+      APP_JWT_EXPIRATION_MINUTES: ${APP_JWT_EXPIRATION_MINUTES:-60}
+      SERVER_PORT: 8080
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    healthcheck:
+      # FIX 4: Correct health check path is /api/health (not /health)
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 45s
+
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    container_name: asset-tracker-ui-broken
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    ports:
+      # FIX 5: Map to port 5173 (not 5174) to match expected frontend port
+      - "${FRONTEND_PORT:-5173}:80"
+
+volumes:
+  mongo_data_broken:

@@ -1,0 +1,72 @@
+# Broken Docker Compose file for troubleshooting exercise
+# This file contains INTENTIONAL errors that need to be fixed.
+
+services:
+  mongo:
+    image: mongo:8
+    container_name: asset-tracker-mongo-broken
+    restart: unless-stopped
+    ports:
+      - "${MONGO_HOST_PORT:-27018}:27017"
+    volumes:
+      - mongo_data_broken:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  backend:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: asset-tracker-api-broken
+    restart: unless-stopped
+    # BUG 1: depends_on without health check condition
+    # Backend may start before MongoDB is ready
+    depends_on:
+      - mongo
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      # BUG 2: Using localhost instead of mongo service name
+      # Inside Docker Compose, containers cannot reach other containers via localhost
+      # localhost inside a container refers to that container itself
+      SPRING_MONGODB_URI: mongodb://localhost:27017/asset_tracker_db
+      # BUG 3: APP_JWT_SECRET is required but missing from .env.broken
+      # This will cause docker compose to fail with a variable interpolation error
+      APP_JWT_SECRET: ${APP_JWT_SECRET:?Set APP_JWT_SECRET in .env.broken file}
+      APP_JWT_EXPIRATION_MINUTES: ${APP_JWT_EXPIRATION_MINUTES:-60}
+      SERVER_PORT: 8080
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    healthcheck:
+      # BUG 4: Wrong health check path - should be /api/health
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 45s
+
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    container_name: asset-tracker-ui-broken
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    ports:
+      # BUG 5: Wrong port mapping - frontend expects 5173 but we map 5174
+      # Users will try to access localhost:5174 but the app is configured for 5173
+      - "5174:80"
+
+volumes:
+  mongo_data_broken:
